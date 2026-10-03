@@ -4,6 +4,12 @@
 
 The goal is to push a general-purpose microcontroller as far as practical while performing **real Bitcoin SHA256d work from live Stratum jobs**, rather than displaying simulated hashrate.
 
+## Current Release
+
+**v0.2.0 — validated extranonce2 cycling and safe 32-bit nonce exhaustion handling**
+
+QHAP is now a live-capable solo-mining firmware that can receive real Stratum work, build valid Bitcoin candidate headers, scan the complete 32-bit nonce space without wrapping, generate a new search space through `extranonce2`, and continue mining the same job.
+
 ## Current Status
 
 QHAP currently supports:
@@ -21,22 +27,182 @@ QHAP currently supports:
 - ESP32-S3 SHA hardware acceleration
 - SHA-256 midstate reuse
 - Sequential nonce scanning
-- Automatic extranonce2 cycling after full 32-bit nonce-space exhaustion
+- Safe final partial nonce chunk through `UINT32_MAX`
+- Automatic `extranonce2` cycling after full 32-bit nonce-space exhaustion
+- Same-job coinbase, Merkle-root, and header regeneration after `extranonce2` changes
 - Real pool-share target comparison
-- Automatic switching to new mining jobs
+- Automatic switching to newly received mining jobs
 - `mining.submit` generation for qualifying shares
 - Pool share acceptance/rejection parsing
 - Restart after detected Stratum disconnection
 
-## Observed Performance
+## Observed Production Performance
 
-Production live-mining firmware has typically measured approximately:
+After the v0.2.0 production firmware was flashed, live mining was observed at approximately:
 
-**263–265 kH/s**
+**268–272 kH/s**
 
-Earlier isolated SHA256d optimization benchmarks reached higher rates before the complete Stratum, target-screening, and controller logic was integrated.
+Typical live scans were around **270 kH/s** while processing real CKPool jobs.
 
-The displayed production rate represents actual ESP32-S3 hashing work.
+Example production output:
+
+```text
+=== LIVE NONCE SCAN ===
+Iterations: 100000
+Rate: 271.30 kH/s
+Nonce range: 0 - 99999
+Final nonce: 99999
+Pool-share candidates: 0
+```
+
+This rate represents actual ESP32-S3 hardware SHA256d work against live Bitcoin candidate headers.
+
+## v0.2.0 Extranonce2 Validation
+
+The complete nonce-exhaustion path was intentionally accelerated once for validation.
+
+QHAP successfully scanned:
+
+```text
+Nonce range: 4294817295 - 4294917294
+Iterations: 100000
+```
+
+followed by the final partial range:
+
+```text
+Nonce range: 4294917295 - 4294967295
+Iterations: 50001
+Final nonce: 4294967295
+```
+
+It then detected exhaustion of the current 32-bit nonce space:
+
+```text
+Nonce space exhausted for current extranonce2
+Advancing extranonce2 and rebuilding job
+```
+
+The same Stratum job was rebuilt with:
+
+```text
+Extranonce2: 0000000000000001
+```
+
+The regenerated coinbase changed, which changed the Merkle root and block header. The rebuilt header was independently verified again:
+
+```text
+Hardware vs PSA: MATCH
+```
+
+Mining then resumed from nonce zero on the regenerated header:
+
+```text
+Rebuilt same job with extranonce2: 0000000000000001
+
+=== LIVE NONCE SCAN ===
+Iterations: 100000
+Nonce range: 0 - 99999
+```
+
+This validates the intended continuous search-space expansion path instead of repeating nonce work or waiting unnecessarily for a new Stratum job.
+
+## How QHAP Mining Works
+
+The **ESP32-S3 itself is the miner**.
+
+The development PC is only required to build, flash, configure, and inspect serial logs. Once flashed, the ESP32-S3 performs the mining work autonomously while powered and connected to Wi-Fi.
+
+The live pipeline is:
+
+```text
+Bitcoin network
+      ↑
+   CKPool / Stratum
+      ↓
+ESP32-S3 QHAP
+      ↓
+mining.subscribe
+      ↓
+mining.authorize
+      ↓
+mining.notify
+      ↓
+Coinbase construction
+      ↓
+SHA256d coinbase
+      ↓
+Merkle root
+      ↓
+80-byte Bitcoin header
+      ↓
+ESP32-S3 SHA hardware
+      ↓
+Nonce 0 ... 4,294,967,295
+      ↓
+Increment extranonce2
+      ↓
+Rebuild coinbase / Merkle root / header
+      ↓
+Repeat
+```
+
+Each nonce is a new SHA256d attempt. When the 32-bit nonce field is exhausted, changing `extranonce2` changes the coinbase transaction, which changes the Merkle root and therefore produces an entirely new block-header search space.
+
+## Pool Share vs Bitcoin Block
+
+These are not the same thing.
+
+A **pool share** is a hash that satisfies the pool's easier share target. It proves that the miner performed real work.
+
+A **Bitcoin block** is a hash that satisfies the much harder Bitcoin network target.
+
+A network-valid Bitcoin block necessarily also satisfies an easier pool target, so QHAP's current share-submit path would submit such a result. However, the current firmware does **not yet emit a dedicated persistent "BITCOIN BLOCK FOUND" event** separate from an ordinary qualifying pool share.
+
+Therefore:
+
+```text
+Pool-share candidate / accepted share
+        ≠
+Bitcoin block found
+```
+
+## What Are the Chances?
+
+QHAP is a genuine lottery miner, not an economically competitive Bitcoin miner.
+
+During one validated live job, QHAP received:
+
+```text
+nBits: 17021ef0
+```
+
+At approximately **270 kH/s**, using that observed network target as a snapshot, the probability of finding a Bitcoin-valid block is approximately:
+
+- **1.49 × 10^-11 per year**
+- about **0.00000000149% per year**
+- roughly **1 chance in 66.9 billion per year**
+- an average statistical waiting time of roughly **66.9 billion years** if hashrate and network target remained unchanged
+
+These are probability estimates, not a countdown. Every individual hash is independent, so a winning hash could theoretically occur immediately, while the network difficulty also changes over time.
+
+The engineering value of QHAP is therefore far greater than its expected financial return.
+
+## How Would I Know If It Found Bitcoin?
+
+A real Bitcoin block would produce evidence outside the ESP32 itself.
+
+The practical confirmation path is:
+
+1. QHAP finds a hash that satisfies the Bitcoin network target.
+2. That result also satisfies the pool target and is submitted through `mining.submit`.
+3. The pool validates and broadcasts the block.
+4. The block becomes visible on the Bitcoin network.
+5. The configured mining address / wallet can be checked against the pool's solo-mining payout record and the public blockchain.
+
+An ordinary accepted pool share is **not** sufficient proof that a Bitcoin block was found.
+
+For stronger autonomous evidence, a future QHAP release should add a dedicated network-target check inside the high-speed scan path plus nonvolatile storage for a permanent block-found record.
 
 ## Validation
 
@@ -49,6 +215,20 @@ Hardware vs PSA: MATCH
 ```
 
 The Bitcoin genesis block was also used as a known-reference validation case.
+
+Validated behavior now includes:
+
+- Correct SHA256d against known data
+- Correct live coinbase construction
+- Correct Merkle-root construction
+- Correct live 80-byte Bitcoin header construction
+- Hardware SHA vs independent PSA SHA agreement
+- Correct pool target derivation
+- Real sequential nonce scanning
+- Safe handling of the final nonce `4294967295`
+- Successful `extranonce2` increment
+- Successful same-job header regeneration
+- Successful resume from nonce zero on the regenerated header
 
 ## Hardware
 
@@ -110,41 +290,17 @@ idf.py -p COM7 flash monitor
 
 Replace `COM7` if the ESP32-S3 appears on another serial port.
 
-## Mining Pipeline
+To inspect an already-running miner **without reflashing**:
 
-```text
-Wi-Fi
-  ↓
-Stratum TCP
-  ↓
-mining.subscribe
-  ↓
-mining.authorize
-  ↓
-mining.notify
-  ↓
-Coinbase construction
-  ↓
-SHA256d coinbase
-  ↓
-Merkle root
-  ↓
-80-byte Bitcoin header
-  ↓
-ESP32-S3 SHA hardware
-  ↓
-Midstate reuse
-  ↓
-Sequential nonce scan
-  ↓
-Pool-target comparison
-  ↓
-mining.submit
+```powershell
+idf.py -p COM7 monitor
 ```
+
+Exiting the serial monitor does not stop the ESP32. As long as the board remains powered and connected to Wi-Fi, the flashed firmware continues running independently.
 
 ## Production Firmware Fingerprint
 
-SHA-256:
+Current validated production binary SHA-256:
 
 ```text
 2FD674648F9A4E98B4EF188BB524ED072C95AF226DCCEDF57CBC45DC6C87357E
@@ -156,9 +312,13 @@ The production binary itself is intentionally excluded from the repository.
 
 The firmware contains a real `mining.submit` path and share-response parser.
 
-However, no qualifying pool share has yet been encountered during development, so an actual accepted share has not yet been observed.
+However:
 
-The automatic disconnect/restart path is implemented but has not yet been intentionally fault-tested.
+- No qualifying pool share has yet been encountered during development, so an actual accepted share has not yet been empirically observed.
+- A dedicated high-speed Bitcoin-network-target event is not yet separated from the ordinary pool-share submit path.
+- The automatic disconnect/restart path is implemented but has not yet been intentionally fault-tested.
+
+These are the main remaining validation boundaries after v0.2.0.
 
 ## Security
 
@@ -183,8 +343,9 @@ QHAP is an engineering and research project exploring:
 - embedded networking
 - nonce-space management
 - cryptographic correctness validation
+- autonomous long-running mining behavior on constrained hardware
 
-It is **not a profitability claim**. Bitcoin network difficulty makes finding a block with an ESP32-S3 extraordinarily unlikely.
+It is **not a profitability claim**.
 
 ---
 
