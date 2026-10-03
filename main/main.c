@@ -44,6 +44,9 @@ static int g_stratum_sock = -1;
 static char g_current_job_id[128] = {0};
 static char g_current_ntime[16] = {0};
 static char g_current_extranonce2[65] = {0};
+static uint8_t g_extranonce2_value[32] = {0};
+static char g_current_notify_line[8192] = {0};
+static bool g_rebuilding_extranonce2 = false;
 
 static bool qhap_hash_meets_target(const uint8_t hash_raw[32],
                                    const uint8_t target_be[32]);
@@ -88,6 +91,21 @@ static bool hex_to_bytes(const char *hex,
     return true;
 }
 
+static bool qhap_increment_extranonce2(void)
+{
+    if (g_extranonce2_size <= 0 ||
+        g_extranonce2_size > (int)sizeof(g_extranonce2_value))
+        return false;
+
+    for (int i = g_extranonce2_size - 1; i >= 0; i--) {
+        g_extranonce2_value[i]++;
+
+        if (g_extranonce2_value[i] != 0)
+            return true;
+    }
+
+    return false;
+}
 static bool qhap_sha256d(const uint8_t *data,
                          size_t len,
                          uint8_t out[32])
@@ -147,11 +165,21 @@ static bool qhap_build_coinbase_hash(const char *coinb1_hex,
         pos + g_extranonce2_size > sizeof(coinbase))
         return false;
 
-    memset(coinbase + pos, 0, g_extranonce2_size);
+    memcpy(coinbase + pos,
+           g_extranonce2_value,
+           g_extranonce2_size);
 
-    memset(g_current_extranonce2,
-           '0',
-           g_extranonce2_size * 2);
+    static const char hex_chars[] = "0123456789abcdef";
+
+    for (int i = 0; i < g_extranonce2_size; i++) {
+        uint8_t b = g_extranonce2_value[i];
+
+        g_current_extranonce2[i * 2] =
+            hex_chars[b >> 4];
+
+        g_current_extranonce2[i * 2 + 1] =
+            hex_chars[b & 0x0F];
+    }
 
     g_current_extranonce2[
         g_extranonce2_size * 2] = '\0';
@@ -409,9 +437,18 @@ static bool qhap_submit_share(uint32_t nonce)
 }
 static void qhap_live_nonce_scan(const uint8_t base_header[80], uint32_t start_nonce)
 {
-    const uint32_t iterations = 100000;
+    const uint32_t max_iterations = 100000U;
+
+    uint64_t remaining =
+        (uint64_t)UINT32_MAX - (uint64_t)start_nonce + 1ULL;
+
+    const uint32_t iterations =
+        remaining < max_iterations
+            ? (uint32_t)remaining
+            : max_iterations;
+
     const uint32_t end_nonce =
-        start_nonce + iterations - 1;
+        start_nonce + iterations - 1U;
 
     uint32_t block1[16];
     uint32_t block2[16] = {0};
@@ -930,6 +967,23 @@ static void process_stratum_line(const char *line)
 
         } else if (strcmp(method->valuestring, "mining.notify") == 0) {
 
+            /*
+             * Preserve fresh Stratum work so the same job can later
+             * be rebuilt with a new extranonce2 after nonce exhaustion.
+             */
+            if (!g_rebuilding_extranonce2) {
+                strncpy(g_current_notify_line,
+                        line,
+                        sizeof(g_current_notify_line) - 1);
+
+                g_current_notify_line[
+                    sizeof(g_current_notify_line) - 1] = '\0';
+
+                memset(g_extranonce2_value,
+                       0,
+                       sizeof(g_extranonce2_value));
+            }
+
             cJSON *params = cJSON_GetObjectItem(root, "params");
 
             if (!cJSON_IsArray(params) ||
@@ -1429,15 +1483,43 @@ void app_main(void)
              */
             if (next_nonce > UINT32_MAX - 100000U) {
 
-                printf("Nonce space exhausted for current job\n");
+                printf("Nonce space exhausted for current extranonce2\n");
 
-                /*
-                 * Do not repeat the nonce space.
-                 * Wait for fresh Stratum work.
-                 */
-                g_pending_header_valid = false;
-                active_job_id[0] = '\0';
-                next_nonce = 0;
+                if (g_current_notify_line[0] != '\0' &&
+                    qhap_increment_extranonce2()) {
+
+                    printf("Advancing extranonce2 and rebuilding job\n");
+
+                    g_pending_header_valid = false;
+                    g_rebuilding_extranonce2 = true;
+                    process_stratum_line(g_current_notify_line);
+                    g_rebuilding_extranonce2 = false;
+
+                    if (g_pending_header_valid) {
+
+                        memcpy(active_header,
+                               g_pending_header,
+                               sizeof(active_header));
+
+                        next_nonce = 0;
+
+                        printf("Rebuilt same job with extranonce2: %s\n",
+                               g_current_extranonce2);
+
+                    } else {
+
+                        printf("Extranonce2 rebuild FAILED\n");
+                        active_job_id[0] = '\0';
+                        next_nonce = 0;
+                    }
+
+                } else {
+
+                    printf("Extranonce2 space exhausted or rebuild unavailable\n");
+                    g_pending_header_valid = false;
+                    active_job_id[0] = '\0';
+                    next_nonce = 0;
+                }
 
             } else {
 
