@@ -21,6 +21,7 @@ QHAP currently supports:
 - ESP32-S3 SHA hardware acceleration
 - SHA-256 midstate reuse
 - Sequential nonce scanning
+- Automatic extranonce2 cycling after full 32-bit nonce-space exhaustion
 - Real pool-share target comparison
 - Automatic switching to new mining jobs
 - `mining.submit` generation for qualifying shares
