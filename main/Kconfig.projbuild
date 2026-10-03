@@ -1,0 +1,27 @@
+menu "QHAP Miner Configuration"
+
+config QHAP_WIFI_SSID
+    string "Wi-Fi SSID"
+    default ""
+
+config QHAP_WIFI_PASSWORD
+    string "Wi-Fi Password"
+    default ""
+
+config QHAP_STRATUM_HOST
+    string "Stratum server"
+    default "stratum.ckpool.org"
+
+config QHAP_STRATUM_PORT
+    int "Stratum port"
+    default 3333
+
+config QHAP_STRATUM_USER
+    string "Bitcoin address / worker"
+    default ""
+
+config QHAP_STRATUM_PASSWORD
+    string "Stratum password"
+    default "x"
+
+endmenu
