@@ -105,6 +105,29 @@ Potential responsibilities:
 
 The Pi should not become a single point of failure for actual hashing or submission if that can be avoided.
 
+## Priority 5B — QHAP Evolution Engine
+
+After the single-BM1370 path is correct and measurable, use the Raspberry Pi 5 as an experiment coordinator that can automatically generate, run, score and retain controller/ASIC strategies.
+
+The optimizer must never alter Bitcoin's consensus SHA256d algorithm. It may explore valid execution and control strategies such as:
+
+- work partitioning and chunk sizes;
+- job-switch scheduling;
+- controller task/core allocation;
+- safe build/compiler variants;
+- UART batching and transport behavior;
+- per-chip frequency/voltage/thermal settings inside hard safety limits;
+- fan/thermal policy;
+- heterogeneous ASIC scheduling.
+
+Candidate search methods may include evolutionary search, Bayesian optimization, multi-armed bandits, simulated annealing and champion/challenger testing.
+
+Primary metrics should include **useful verified hashes/s, hashes/joule, stale/duplicate fraction, error rate, temperature stability, job-switch latency and uptime**, rather than raw displayed hashrate alone.
+
+Every candidate must pass a deterministic correctness/safety gate before it can become production-eligible. The first implementation can use the existing Raspberry Pi 5, ESP32-S3 and incoming Gamma 602; extra ESP32 boards are optional later for parallel experiment lanes.
+
+This is a research direction, not yet a demonstrated QHAP performance advantage.
+
 ## Priority 6 — Quantum mining research
 
 Quantum work is a research track, not the first practical way to improve current Bitcoin-winning probability.
