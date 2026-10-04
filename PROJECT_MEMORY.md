@@ -55,6 +55,9 @@ Important commits:
 | `284e76e` | Updated production firmware fingerprint; tagged `v0.2.0` |
 | `f5fa273` | Expanded v0.2.0 technical/mining documentation |
 | `3edc6d7` | Added probability-first engineering roadmap |
+| `3107fbc` | Added persistent project memory |
+| `d00693b` | Added Bitcoin network block-candidate detection; hardware-validated on ESP32 |
+| `58bb197` | Merged block-safe candidate detection to `main` via PR #1 |
 
 Relevant branches known during development:
 
@@ -481,9 +484,11 @@ v0.2.0 does not yet persist a network-valid candidate in NVS.
 
 ### Dedicated block event
 
-v0.2.0 validates the network target during job setup but does not yet have the desired dedicated high-speed persistent **BITCOIN NETWORK BLOCK FOUND** path in production.
+The post-v0.2.0 block-safe milestone now retains the live Bitcoin network target globally, checks pool-qualified candidates against that network target inside the high-speed nonce loop, emits a distinct **BITCOIN NETWORK BLOCK FOUND** event, and prioritizes submission of a network-valid candidate.
 
-These points are exactly why block-safe reliability is Priority 1.
+This code was build-valid and flashed to the real ESP32. Live CKPool mining remained stable at about 268–270 kH/s and `Hardware vs PSA: MATCH` remained intact.
+
+The actual block-found branch has **not** naturally fired because no Bitcoin-network-valid hash has been found. NVS winner persistence, robust submit retry/ACK handling, stale-job hardening, and deliberate reconnect fault testing remain unfinished.
 
 ---
 
@@ -666,121 +671,135 @@ No step counts unless it increases real valid hashing, protects valid results, o
 
 ## 19. Current v0.3 development resume point
 
-### Active local branch
+### Current repository state
+
+The first block-safe milestone is now merged into GitHub `main`.
+
+Relevant commits:
+
+```text
+d00693b  Add Bitcoin network block candidate detection
+58bb197  Merge PR #1 into main
+```
+
+The user's local branch at the time of this consolidation is still:
 
 ```text
 feature/block-safe-reliability
 ```
 
-The branch was created from `f5fa273`, then locally fast-forwarded to `3edc6d7` after fetching the new roadmap commit.
+and it tracks `origin/feature/block-safe-reliability`.
 
-### Local changes successfully made after that
+### Validated block-safe changes now present
 
-Two block-safe foundation edits were successfully applied to the local `main/main.c`:
-
-1. Added global network-target state:
+The code now contains global Bitcoin network-target state:
 
 ```c
 static uint8_t g_network_target_be[32] = {0};
 static bool g_network_target_valid = false;
 ```
 
-2. Changed live `nBits` parsing/validation to retain the Bitcoin network target in those globals rather than only a temporary local array.
+Live `nBits` parsing stores the target into those globals.
 
-The successful console confirmation was:
+Inside `qhap_live_nonce_scan`, QHAP now tracks:
+
+```c
+uint32_t block_candidates = 0;
+uint32_t first_block_nonce = 0;
+uint8_t first_block_hash[32] = {0};
+```
+
+After a hash passes the easier pool target, QHAP also compares it against the Bitcoin network target. If it passes, it records the first network-valid candidate.
+
+A network-valid candidate takes submission priority and emits:
 
 ```text
-QHAP live network target is now retained globally.
+### BITCOIN NETWORK BLOCK FOUND! ###
 ```
 
-### Block-candidate hot-loop edit has NOT yet been applied
+before calling `qhap_submit_share(first_block_nonce)`.
 
-An attempted multi-replacement PowerShell edit failed all three target checks:
+### Build validation
+
+After resolving the ESP-IDF environment mismatch with `idf.py fullclean`, the modified firmware completed:
 
 ```text
-Scanner variable target not found - no changes made.
-Candidate target not found - no changes made.
-Submission target not found - no changes made.
+Project build complete.
 ```
 
-A later check:
+### Hardware validation
 
-```powershell
-Select-String -Path .\main\main.c -Pattern "block_candidates|BITCOIN NETWORK BLOCK FOUND"
-```
+The modified firmware was flashed to the real ESP32-S3 and connected successfully to CKPool.
 
-printed nothing.
-
-Therefore **do not assume block candidate detection exists yet**.
-
-### Exact scanner locations observed
-
-Current local source showed:
+Observed live job properties included:
 
 ```text
-main\main.c:460  uint32_t share_candidates = 0;
-main\main.c:461  uint32_t first_share_nonce = 0;
-main\main.c:462  uint8_t first_share_hash[32] = {0};
-
-main\main.c:576  share_candidates++;
-main\main.c:578  if (share_candidates == 1) { ... }
-
-main\main.c:616  if (share_candidates > 0) {
-main\main.c:617      qhap_submit_share(first_share_nonce);
+Pool difficulty: 10000
+nBits: 17021ef0
+Network target: 000000000000000000021ef00000000000000000000000000000000000000000
+Hardware vs PSA: MATCH
 ```
 
-### Most recent failed edit
-
-A follow-up variable-only edit used relative path `.\main\main.c`.
-
-`.NET ReadAllText` unexpectedly attempted:
+Live mining continued normally with sequential 100,000-nonce chunks at approximately:
 
 ```text
-C:\Users\Admin\main\main.c
+267.80 kH/s
+268.10 kH/s
+269.34 kH/s
+269.06 kH/s
+270.39 kH/s
+267.79 kH/s
 ```
 
-and both read/write failed.
+This proves the new network-target/block-candidate logic did not break normal live mining.
 
-The printed line:
+### Validation boundary
+
+The dedicated block-found branch has **not** been empirically triggered by a real network-valid hash. That is expected because such a result is extraordinarily rare.
+
+Therefore the current milestone is:
+
+- source-valid;
+- build-valid;
+- live-hardware-valid for normal mining;
+- cryptographically consistent with the existing PSA cross-check;
+- **not yet naturally block-event-valid**.
+
+### Strategic decision
+
+Because the user's north-star goal is **1 BTC/day**, further ESP32 reliability polish has diminishing probability value compared with adding dedicated ASIC hashrate.
+
+The agreed direction after this minimum block-safe milestone is to pivot toward **ASIC integration / ~1 TH/s class**, while leaving these reliability items for later hardening before serious scale:
+
+- NVS winner persistence;
+- robust partial-send/retry/ACK state;
+- stale-job hardening;
+- deliberate reconnect/fault testing.
+
+### Workflow correction retained
+
+Use absolute paths such as:
 
 ```text
-Block-candidate variables added successfully.
+C:\esp_projects\qhap\main\main.c
 ```
 
-was **not evidence of success** because it was executed manually after the failures.
-
-### Next safe continuation rule
-
-Before any further source edit:
-
-1. use the absolute file path `C:\esp_projects\qhap\main\main.c`;
-2. verify the target text exists;
-3. perform exactly one atomic edit;
-4. immediately verify with `Select-String` or `git diff`;
-5. only then continue.
-
-Do not repeat broad multi-edit PowerShell blocks until the exact current source is confirmed.
+for PowerShell/.NET source edits. Relative .NET paths previously resolved unexpectedly under `C:\Users\Admin`.
 
 ---
 
-## 20. Expected next block-safe implementation sequence
+## 20. Expected next engineering sequence
 
-Resume from the current local state in this order:
+The immediate probability-first continuation is now:
 
-1. Verify the absolute path resolves.
-2. Verify the two existing local network-target edits are present.
-3. Add block-candidate state variables to `qhap_live_nonce_scan`.
-4. Add full network-target comparison only after a candidate already passes the easier pool-target path.
-5. Print a clearly separate **BITCOIN NETWORK BLOCK FOUND** event.
-6. Preserve both pool-share and network-block semantics.
-7. Build before adding NVS persistence.
-8. Add NVS persistent winner record.
-9. Make `mining.submit` stateful/retry-safe.
-10. Strengthen stale-job and socket-error handling.
-11. Perform deliberate reconnect/fault testing.
-12. Only after code/build tests are clean, reconnect the ESP32 for flash + live validation.
+1. Select the fastest practical dedicated ASIC path for QHAP's first ~1 TH/s-class milestone.
+2. Prefer a platform that preserves QHAP's ability to control/validate work rather than turning the project into a black-box miner.
+3. Benchmark actual hashrate, power, thermals, and job-switch behavior.
+4. Integrate QHAP's block-safe target validation and submission semantics with the ASIC work path.
+5. Scale only after one ASIC path is stable and measured.
+6. Return to NVS persistence, retry/ACK hardening, stale-job protection, and deliberate fault testing before moving to materially larger fleets.
 
-The ESP32 does **not** need to be connected during ordinary source editing/build work. It can remain powered from the wall adapter and continue mining the last validated v0.2.0 firmware until flash testing is required.
+The current ESP32 firmware can continue mining independently while ASIC research/procurement proceeds.
 
 ---
 
