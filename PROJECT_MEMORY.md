@@ -854,6 +854,49 @@ The immediate engineering objective is not merely to run stock AxeOS. It is to u
 
 ---
 
+## 20B. Frontier research screen and immediate experiment — 2026-10-05
+
+A fresh scan of current mathematics/physics/computing research was used to separate ideas that are scientifically interesting from ideas that can improve QHAP now.
+
+### Findings
+
+- Full 64-round SHA-256 remains unbroken for practical preimage search. Recent practical results concern reduced-round compression functions and do not transfer to Bitcoin's full double-SHA256 mining problem.
+- Current quantum mining remains far beyond available cloud hardware; Grover-style mining requires large reversible SHA256d oracles and fault-tolerant logical qubits.
+- Reversible/adiabatic computing is a credible long-term energy-efficiency research direction, but requires different hardware and cannot improve the current ESP32 or BM1370 immediately.
+- The ESP32-S3 has dual Xtensa LX7 cores and 128-bit PIE SIMD/vector extensions. Those vector instructions are not generally emitted automatically by the compiler and therefore create a concrete optimization research opportunity.
+- Current BM1370 firmware ecosystems use version rolling/ASICBoost, but 2026 issue reports show at least some forks parsed pool version masks without correctly applying them to the ASIC. QHAP should implement and verify version-mask handling itself when the BM1370 integration begins.
+
+### Immediate experimental invention: QHAP Heterogeneous Dual-Engine Miner
+
+Hypothesis:
+
+> Run the existing direct-register SHA hardware miner and a completely independent pure-software SHA256d miner concurrently on the other LX7 core, with disjoint search spaces. If aggregate verified hashes/sec rises without stale/duplicate work, then vectorize the software lane using ESP32-S3 PIE SIMD to process multiple nonces in parallel.
+
+Stages:
+
+1. Keep the current hardware SHA mining loop as the baseline (~268–272 kH/s).
+2. Add a pure-software SHA256d reference lane pinned to the second core.
+3. Partition nonce/header search spaces so hardware and software lanes never duplicate work.
+4. Measure aggregate verified hashes/sec and power.
+5. If concurrency is positive, implement a 4-way PIE SIMD SHA256d software lane.
+6. Cross-check both lanes against the independent reference verifier.
+7. Reject the experiment if throughput, stability, or energy efficiency gets worse.
+
+Decision thresholds:
+
+- <3% aggregate gain: discard as production optimization.
+- 3–10%: retain as optional research path.
+- >10%: integrate into native ESP32 mining.
+- Any correctness discrepancy: stop and debug; never trade correctness for displayed hashrate.
+
+This is a measurable probability improvement because any genuine increase in verified hashes/sec produces a proportional increase in block-finding probability.
+
+### Secondary ASIC-era experiment
+
+When BM1370 hardware is available, QHAP should implement a verified BIP310/version-rolling scheduler with pool-mask enforcement and benchmark job-switch latency, valid work rate, stale-work rate, and hashes/joule against stock firmware.
+
+---
+
 ## 21. Workflow rules for future QHAP sessions
 
 These are important because previous sessions became inefficient when verification loops repeated.
