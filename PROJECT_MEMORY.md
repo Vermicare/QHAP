@@ -897,6 +897,42 @@ When BM1370 hardware is available, QHAP should implement a verified BIP310/versi
 
 ---
 
+## 20C. Heterogeneous dual-engine ESP32 experiment — validated 2026-10-05
+
+Research branch:
+
+```text
+feature/dual-engine-mining
+commit 1000325
+draft PR #2
+```
+
+Purpose: test whether unused ESP32-S3 Core 1 CPU capacity can add real SHA256d throughput while the existing direct-register hardware SHA miner continues on Core 0.
+
+Validated results:
+
+- independent pure-software SHA256d implementation matched PSA and hardware SHA bit-for-bit;
+- Core 1 scalar software lane measured about 11.39 kH/s;
+- caching the first 64-byte SHA-256 midstate raised the Core 1 lane to about 17.06–17.09 kH/s, roughly a 50% improvement in that software lane;
+- concurrent hardware lane measured roughly 259–261 kH/s versus the ~269–270 kH/s hardware-only production baseline;
+- combined computational throughput therefore measured roughly 276–278 kH/s, approximately 2.5–3% above the hardware-only baseline;
+- the watchdog initially fired because IDLE1 was starved; periodic blocking every 1024 software hashes fixed the watchdog issue;
+- a 16-word rolling message-schedule compressor was tested, remained cryptographically correct, but slowed the software lane to about 14.64 kH/s, so it was reverted;
+- final restored cached-midstate implementation again measured ~17.08 kH/s and `Midstate vs PSA: MATCH`.
+
+Important limitation:
+
+The Core 1 worker currently computes valid SHA256d hashes for benchmarking but does not yet perform pool/network target checks or submit a winning nonce. Therefore the extra ~17 kH/s is not yet production mining hashrate and PR #2 must remain unmerged until that path is made block-safe.
+
+Decision:
+
+- preserve the experiment as a successful research result;
+- do not spend more time on ESP32 micro-optimization now;
+- pivot probability-improvement effort to BM1370 ASIC integration, where the hashrate jump is millions-fold;
+- retain the heterogeneous scheduling idea for later transfer to ASIC/controller architecture.
+
+---
+
 ## 21. Workflow rules for future QHAP sessions
 
 These are important because previous sessions became inefficient when verification loops repeated.
