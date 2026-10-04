@@ -6,7 +6,7 @@
 >
 > **Security rule:** Never store Wi-Fi passwords, wallet seed phrases, private keys, API keys, or other secrets here. The configured Bitcoin worker/address may exist in local configuration but is intentionally omitted from this document.
 
-Last consolidated: **2026-10-04**
+Last consolidated: **2026-10-05**
 
 ---
 
@@ -930,6 +930,133 @@ Decision:
 - do not spend more time on ESP32 micro-optimization now;
 - pivot probability-improvement effort to BM1370 ASIC integration, where the hashrate jump is millions-fold;
 - retain the heterogeneous scheduling idea for later transfer to ASIC/controller architecture.
+
+---
+
+## 20D. BM1370 pre-hardware result-path validation — validated 2026-10-05
+
+Active branch:
+
+```text
+feature/bm1370-integration
+```
+
+QHAP now contains a BM1370 protocol substrate plus a virtual/mock result source that runs on the actual ESP32-S3.
+
+Validated on the ESP32-S3:
+
+- `qhap_bm1370_protocol_self_test() == PASS`;
+- `qhap_bm1370_mock_self_test() == PASS`;
+- a synthetic BM1370 result packet is decoded into nonce/job/core/version fields;
+- a real live CKPool job is constructed normally by QHAP;
+- the mock BM1370 returns nonce 0;
+- QHAP reconstructs the exact 80-byte header from the decoded result;
+- independent SHA256d of that reconstructed header matches the already-validated live header hash;
+- this produced `BM1370 mock live-header hash: MATCH` on multiple different live CKPool jobs;
+- the native ESP32 miner remained active and measured about **270.23 kH/s** during the same firmware run.
+
+Important interpretation:
+
+- the ESP32 is still performing **real Bitcoin mining** against live CKPool work;
+- the BM1370 mock is only a controller/decoder verification path and contributes **no additional mining hashrate**;
+- this validates the controller-side pre-hardware chain, not physical BM1370 compatibility;
+- real UART timing, chip initialization, exact job encoding, returned checksum semantics, real nonce responses and silicon behavior remain pending until the Gamma 602 arrives.
+
+Current known protocol gap before production physical RX:
+
+- the 11-byte BM1370 result decoder currently parses the returned status/checksum byte but does **not yet independently reject a response by validating its CRC5/checksum semantics**;
+- response-integrity validation must be implemented and checked against real hardware/upstream behavior before physical results are trusted.
+
+The next meaningful controller milestone is an independent ASIC-candidate gate:
+
+```text
+ASIC result
+  -> job lookup
+  -> stale check
+  -> duplicate check
+  -> exact header reconstruction
+  -> independent SHA256d
+  -> pool target check
+  -> Bitcoin network target check
+  -> submit / block-safe priority path
+```
+
+---
+
+## 20E. QHAP Evolution Engine concept — recorded 2026-10-05
+
+New architecture direction: QHAP should eventually include an **autonomous experiment/evolution layer** that searches for measurable improvements instead of relying only on manual one-variant-at-a-time tuning.
+
+The Bitcoin consensus algorithm remains SHA256d. The engine must never mutate the mining formula into a non-consensus algorithm. It may instead optimize how valid work is executed, scheduled and controlled.
+
+Proposed supervisory architecture:
+
+```text
+Raspberry Pi 5
+QHAP Evolution / experiment controller
+        |
+        +-- generate candidate strategies
+        +-- schedule controlled experiments
+        +-- collect telemetry/results
+        +-- statistical comparison
+        +-- retain champion / reject regressions
+        |
+        v
+ESP32-S3 controller(s)
+        |
+        +-- native SHA reference/research lane
+        +-- BM1370 / later ASIC workers
+```
+
+Candidate variables include:
+
+- compiler/build options and safe code-generation variants;
+- SHA scheduling/midstate/controller strategies;
+- nonce/extranonce/version work partitioning;
+- job chunk sizes and job-switch behavior;
+- task/core allocation;
+- memory layout and copy reduction;
+- UART batching/transport strategy;
+- per-ASIC frequency, voltage, thermal and fan-control settings inside hard safety limits;
+- per-chip work scheduling and heterogeneous fleet policies.
+
+Candidate optimization methods to investigate include evolutionary search, genetic algorithms, Bayesian optimization, multi-armed bandits, simulated annealing and champion/challenger testing.
+
+Do not optimize only for displayed hashrate. Candidate score/selection should consider measurable production value such as:
+
+- useful verified hashes/s;
+- hashes/joule;
+- stale-work fraction;
+- duplicate-work fraction;
+- hardware/serial error rate;
+- temperature and thermal stability;
+- job-switch latency;
+- uptime/recovery behavior.
+
+Every automatically generated strategy must remain behind a deterministic correctness wall before it can become production-eligible:
+
+```text
+known SHA256d vectors
+  -> genesis/reference tests
+  -> PSA/reference comparison
+  -> live-header reconstruction comparison
+  -> target-check verification
+  -> short benchmark
+  -> long stability benchmark
+  -> production eligibility
+```
+
+For ASIC tuning, hard electrical/thermal envelopes must be externally enforced so an optimizer cannot arbitrarily raise voltage/frequency or trade hardware safety for a temporary benchmark win.
+
+Current hardware is already sufficient for a first evolution-engine prototype:
+
+- Raspberry Pi 5 8 GB as the experiment coordinator/data store;
+- existing ESP32-S3 as controller/reference hardware;
+- incoming Bitaxe Gamma 602 / BM1370 as the first ASIC-under-test.
+
+Additional ESP32-S3 boards may later be useful for parallel experiment lanes, but no extra controller purchase is required now.
+
+This remains a **planned research architecture**, not a validated performance advantage. QHAP should call it innovative only after controlled experiments demonstrate reproducible improvement over a fixed baseline.
 
 ---
 
