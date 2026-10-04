@@ -37,6 +37,9 @@ static double g_pool_difficulty = 0.0;
 static uint8_t g_pool_target_be[32] = {0};
 static bool g_pool_target_valid = false;
 
+static uint8_t g_network_target_be[32] = {0};
+static bool g_network_target_valid = false;
+
 static uint8_t g_pending_header[80];
 static bool g_pending_header_valid = false;
 static int g_stratum_sock = -1;
@@ -461,6 +464,10 @@ static void qhap_live_nonce_scan(const uint8_t base_header[80], uint32_t start_n
     uint32_t first_share_nonce = 0;
     uint8_t first_share_hash[32] = {0};
 
+    uint32_t block_candidates = 0;
+    uint32_t first_block_nonce = 0;
+    uint8_t first_block_hash[32] = {0};
+
     uint32_t pool_target_top =
         ((uint32_t)g_pool_target_be[0] << 24) |
         ((uint32_t)g_pool_target_be[1] << 16) |
@@ -583,6 +590,23 @@ static void qhap_live_nonce_scan(const uint8_t base_header[80], uint32_t start_n
                            candidate_bytes,
                            32);
                 }
+
+                if (g_network_target_valid &&
+                    qhap_hash_meets_target(
+                        candidate_bytes,
+                        g_network_target_be)) {
+
+                    block_candidates++;
+
+                    if (block_candidates == 1) {
+
+                        first_block_nonce = nonce;
+
+                        memcpy(first_block_hash,
+                               candidate_bytes,
+                               32);
+                    }
+                }
             }
         }
 
@@ -613,7 +637,26 @@ static void qhap_live_nonce_scan(const uint8_t base_header[80], uint32_t start_n
 
     esp_sha_release_hardware();
 
-    if (share_candidates > 0) {
+    if (block_candidates > 0) {
+
+        printf("\n####################################\n");
+        printf("### BITCOIN NETWORK BLOCK FOUND! ###\n");
+        printf("####################################\n");
+
+        printf("Block nonce: %lu\n",
+               (unsigned long)first_block_nonce);
+
+        printf("Block hash: ");
+
+        for (int i = 31; i >= 0; i--)
+            printf("%02x", first_block_hash[i]);
+
+        printf("\n");
+
+        qhap_submit_share(first_block_nonce);
+
+    } else if (share_candidates > 0) {
+
         qhap_submit_share(first_share_nonce);
     }
 
@@ -1130,24 +1173,29 @@ static void process_stratum_line(const char *line)
 
                             printf("\n");
 
-                            uint8_t network_target[32];
-
-                            if (qhap_nbits_to_target(
+                            g_network_target_valid =
+                                qhap_nbits_to_target(
                                     nbits->valuestring,
-                                    network_target)) {
+                                    g_network_target_be);
+
+                            if (g_network_target_valid) {
 
                                 printf("Network target:     ");
 
                                 for (int i = 0; i < 32; i++)
                                     printf("%02x",
-                                           network_target[i]);
+                                           g_network_target_be[i]);
 
                                 printf("\nNonce 0 block-valid: %s\n",
                                        qhap_hash_meets_target(
                                            header_hash,
-                                           network_target)
+                                           g_network_target_be)
                                            ? "YES"
                                            : "NO");
+
+                            } else {
+
+                                printf("Network target calculation FAILED\n");
                             }
 
                             uint8_t hw_hash[32];
