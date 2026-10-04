@@ -803,6 +803,57 @@ The current ESP32 firmware can continue mining independently while ASIC research
 
 ---
 
+## 20A. ASIC research decision — 2026-10-05
+
+After comparing current open-source BM1370 options, the preferred **first ASIC integration target** is:
+
+```text
+Bitaxe Gamma 602
+1 × BM1370
+~1.1–1.2 TH/s stock class
+~17–20 W typical
+ESP32-S3 controller
+open hardware
+USB-C programmable
+official BM1370 support in ESP-Miner
+```
+
+Reasoning:
+
+- single-ASIC topology minimizes first-integration complexity;
+- it is already architecturally close to QHAP: ESP32-S3 controller + Stratum + BM1370;
+- official ESP-Miner exposes the BM1370 command/job/result protocol in source;
+- Gamma 602 is the newer board revision with DFM/routing improvements over 601;
+- the jump from ~270 kH/s to ~1.2 TH/s is roughly 4.4 million× in raw hashing rate;
+- once QHAP successfully drives one BM1370, the same controller concepts can be scaled to multi-chip boards.
+
+Do **not** treat Gamma 602 as the endgame. It is the bring-up/development ASIC node.
+
+Preferred next scaling target after successful single-chip integration:
+
+```text
+NerdQAxe++
+4 × BM1370
+~4.8 TH/s stock class
+~72–80 W typical
+ESP32-S3
+open-source hardware/firmware ecosystem
+```
+
+A dual-BM1370 Bitaxe GT 801 and larger multi-chip designs remain valid alternatives, but they add multi-chip, power, cooling, and firmware complexity before QHAP has proven direct BM1370 control.
+
+Purchase constraint:
+
+- confirm exact **Gamma 602** board revision;
+- include a stable **5 V supply capable of >4 A** (25–30 W class is preferred by the official project);
+- active cooling is mandatory;
+- preserve/backup stock firmware before flashing experimental QHAP firmware;
+- expect seller warranty terms may exclude unsupported firmware modifications or overclocking.
+
+The immediate engineering objective is not merely to run stock AxeOS. It is to use the Gamma 602 as a reference/bring-up platform and progressively integrate QHAP's Stratum, block-safe validation, and submission logic with direct BM1370 ASIC control.
+
+---
+
 ## 21. Workflow rules for future QHAP sessions
 
 These are important because previous sessions became inefficient when verification loops repeated.
