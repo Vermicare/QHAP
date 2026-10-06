@@ -218,6 +218,33 @@ Never send fake/invalid shares merely to force an acceptance test.
 
 ---
 
+## 6A. Solo CKPool payout semantics — confirmed 2026-10-07
+
+QHAP's current endpoint is **solo.ckpool.org**, which is a solo-mining service rather than a proportional shared-reward pool.
+
+Current published behavior:
+
+- solo.ckpool.org advertises a **2% fee**;
+- submitted lower-difficulty shares are primarily feedback/accounting telemetry and do **not** accumulate a fractional BTC payout;
+- payout occurs only if the miner's work solves a **Bitcoin-network-valid block**;
+- Bitcoin's current subsidy is **3.125 BTC per block**, plus transaction fees;
+- therefore a current-era winning solo block is greater than 1 BTC even after the advertised 2% fee;
+- ordinary hashes, near misses, and pool-share-only results produce **0 BTC payout by themselves** in this solo configuration;
+- coinbase outputs require **100 blocks of maturity** before they are spendable.
+
+Important distinction:
+
+```text
+pool share != partial Bitcoin payout on solo.ckpool.org
+network-valid block = solo payout event
+```
+
+This means QHAP's current economics are discontinuous: it does not progressively earn 0.001/0.01/0.1 BTC for increasingly good hashes. A conventional shared pool would have different payout semantics.
+
+Future halvings can eventually reduce the subsidy below 1 BTC, so documentation should state the current subsidy rather than treating ">1 BTC per solved block" as permanent.
+
+---
+
 ## 7. Bitcoin target validation
 
 One validated live job used:
