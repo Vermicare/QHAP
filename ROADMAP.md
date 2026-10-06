@@ -201,6 +201,29 @@ At a network hashrate near the order of 1 ZH/s, rough sustained solo-mining scal
 
 These are order-of-magnitude planning figures. QHAP should calculate them dynamically from live difficulty/hashrate before making current estimates.
 
+## Solo payout interpretation
+
+For the current solo.ckpool.org configuration, **expected BTC/time** must not be confused with smooth periodic income.
+
+The miner receives no fractional payout merely for producing ordinary lower-difficulty pool shares. Actual payout is tied to solving a Bitcoin-network-valid block. Therefore the realized payout path is highly discontinuous even when the statistical expectation is well defined.
+
+As of October 2026:
+
+- subsidy: **3.125 BTC/block** plus transaction fees;
+- solo.ckpool.org published service fee: **2%**;
+- a current-era solved solo block is therefore greater than 1 BTC after the advertised service fee;
+- all non-winning work can still result in **0 BTC realized payout**.
+
+When comparing QHAP designs, use both:
+
+```text
+expected BTC/time
+and
+probability distribution / expected waiting time
+```
+
+Do not present expected value as if it were a smooth payout stream.
+
 ## Bitcoin-per-time interpretation
 
 A block currently carries a 3.125 BTC subsidy plus transaction fees until the next halving. Bitcoin targets one block about every ten minutes across the entire network.
