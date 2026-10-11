@@ -23,6 +23,8 @@
 #include "esp_timer.h"
 #include "sha/sha_core.h"
 #include "hal/sha_ll.h"
+#include "qhap_bm1370_protocol.h"
+#include "qhap_bm1370_mock.h"
 
 #define WIFI_CONNECTED_BIT BIT0
 #define WIFI_FAIL_BIT      BIT1
@@ -1214,6 +1216,50 @@ static void process_stratum_line(const char *line)
                                            ? "MATCH"
                                            : "MISMATCH");
 
+                                /* BM1370 mock live-header verification */
+                                uint8_t mock_raw[QHAP_BM1370_RESULT_SIZE];
+                                qhap_bm1370_result_t mock_result;
+                                uint8_t mock_header[80];
+                                uint8_t mock_hash[32];
+
+                                qhap_bm1370_mock_make_result(
+                                    0U,
+                                    0x10U,
+                                    0U,
+                                    true,
+                                    mock_raw);
+
+                                if (qhap_bm1370_decode_result(
+                                        mock_raw,
+                                        &mock_result)) {
+
+                                    memcpy(mock_header,
+                                           header,
+                                           sizeof(mock_header));
+
+                                    mock_header[76] =
+                                        (uint8_t)mock_result.nonce;
+                                    mock_header[77] =
+                                        (uint8_t)(mock_result.nonce >> 8);
+                                    mock_header[78] =
+                                        (uint8_t)(mock_result.nonce >> 16);
+                                    mock_header[79] =
+                                        (uint8_t)(mock_result.nonce >> 24);
+
+                                    if (qhap_sha256d(
+                                            mock_header,
+                                            sizeof(mock_header),
+                                            mock_hash)) {
+
+                                        printf("BM1370 mock live-header hash: %s\n",
+                                               memcmp(mock_hash,
+                                                      header_hash,
+                                                      32) == 0
+                                                   ? "MATCH"
+                                                   : "MISMATCH");
+                                    }
+                                }
+
                                 memcpy(g_pending_header,
                                        header,
                                        sizeof(g_pending_header));
@@ -1313,6 +1359,29 @@ static int qhap_receive_available(int sock)
 
 void app_main(void)
 {
+    printf("\n=== BM1370 PROTOCOL SELF-TEST ===\n");
+
+    bool bm1370_protocol_ok =
+        qhap_bm1370_protocol_self_test();
+
+    printf("BM1370 protocol self-test: %s\n",
+           bm1370_protocol_ok ? "PASS" : "FAIL");
+
+    if (!bm1370_protocol_ok) {
+        printf("BM1370 protocol layer rejected - stopping.\n");
+        return;
+    }
+
+    bool bm1370_mock_ok = qhap_bm1370_mock_self_test();
+
+    printf("BM1370 mock self-test: %s\n",
+           bm1370_mock_ok ? "PASS" : "FAIL");
+
+    if (!bm1370_mock_ok) {
+        printf("BM1370 mock result decoder rejected - stopping.\n");
+        return;
+    }
+
     printf("\n=== QHAP LIVE JOB PARSER ===\n");
 
     if (!wifi_connect()) {
