@@ -32,7 +32,7 @@ bool qhap_bm1370_mock_self_test(void)
         0x12, 0x34,
 
         /* job-response flag + synthetic CRC bits */
-        0x9B
+        0x8C
     };
 
     qhap_bm1370_result_t result;
@@ -65,6 +65,21 @@ bool qhap_bm1370_mock_self_test(void)
     if (!result.is_job_response)
         return false;
 
+    uint8_t corrupt[QHAP_BM1370_RESULT_SIZE];
+    memcpy(corrupt, raw, sizeof(corrupt));
+    corrupt[5] ^= 0x01U;
+    if (qhap_bm1370_decode_result(corrupt, &result))
+        return false;
+
+    uint8_t generated[QHAP_BM1370_RESULT_SIZE];
+    qhap_bm1370_mock_make_result(
+        0x01020304U, 0x3BU, 0x1234U, true, generated);
+    if (!qhap_bm1370_decode_result(generated, &result) ||
+        result.nonce != 0x01020304U ||
+        result.raw_id != 0x3BU ||
+        !result.is_job_response)
+        return false;
+
     return true;
 }
 void qhap_bm1370_mock_make_result(
@@ -93,6 +108,17 @@ void qhap_bm1370_mock_make_result(
     out_raw[8] = (uint8_t)(raw_version >> 8);
     out_raw[9] = (uint8_t)raw_version;
 
-    out_raw[10] =
+    const uint8_t flags =
         (uint8_t)(job_response ? 0x80U : 0x00U);
+
+    /* Mock-only CRC search: all 32 possible CRC5 values. */
+    for (uint8_t crc = 0; crc < 32U; crc++) {
+        out_raw[10] = (uint8_t)(flags | crc);
+        if (qhap_bm1370_crc5(
+                out_raw + 2,
+                QHAP_BM1370_RESULT_SIZE - 2U) == 0U)
+            return;
+    }
+
+    memset(out_raw, 0, QHAP_BM1370_RESULT_SIZE);
 }
