@@ -989,10 +989,10 @@ Important interpretation:
 - this validates the controller-side pre-hardware chain, not physical BM1370 compatibility;
 - real UART timing, chip initialization, exact job encoding, returned checksum semantics, real nonce responses and silicon behavior remain pending until the Gamma 602 arrives.
 
-Current known protocol gap before production physical RX:
+Historical protocol gap at the 2026-10-05 milestone (resolved in PR #3 on 2026-10-11):
 
-- the 11-byte BM1370 result decoder currently parses the returned status/checksum byte but does **not yet independently reject a response by validating its CRC5/checksum semantics**;
-- response-integrity validation must be implemented and checked against real hardware/upstream behavior before physical results are trusted.
+- the 11-byte BM1370 result decoder originally parsed the status/checksum byte without validating CRC5;
+- this was remedied by CRC5 residue validation and corrupt-packet rejection in the 2026-10-11 integration-branch update; validation against actual received BM1370 hardware frames is still pending.
 
 The next meaningful controller milestone is an independent ASIC-candidate gate:
 
@@ -1084,6 +1084,39 @@ Current hardware is already sufficient for a first evolution-engine prototype:
 Additional ESP32-S3 boards may later be useful for parallel experiment lanes, but no extra controller purchase is required now.
 
 This remains a **planned research architecture**, not a validated performance advantage. QHAP should call it innovative only after controlled experiments demonstrate reproducible improvement over a fixed baseline.
+
+---
+
+## 20F. BM1370 CRC5 result validation and wall-clock mining benchmark — validated 2026-10-11
+
+Integration milestone: [PR #3](https://github.com/Vermicare/QHAP/pull/3) merged into `feature/bm1370-integration` from `feature/bm1370-crc5-validation-20261011`.
+
+Commits:
+
+- `7173b2c` — Validate incoming BM1370 result CRC5 and improve mock packet tests.
+- `f8d5d48` — Add 30-second ESP32-S3 wall-clock mining benchmark.
+- `4aa8268` — Merge PR #3 into the BM1370 integration branch.
+
+Observed evidence from the Windows ESP-IDF v6.1 board B workflow:
+
+- `idf.py -B build_board_b build`: `Project build complete`.
+- ESP32-S3 serial output: `BM1370 protocol self-test: PASS`, `BM1370 mock self-test: PASS`.
+- Live mining: `STRATUM TCP CONNECTED`, `Hardware vs PSA: MATCH`, `BM1370 mock live-header hash: MATCH`, sequential nonce scanning resumed.
+- Synthetic result test updated to a CRC5-valid sample ending in `0x8C` (the older `0x9B` sample had an invalid remainder).
+- Decoder now rejects responses whose CRC5 remainder over the 9 bytes following the `AA 55` preamble is nonzero.
+- Mock generator produces valid CRC5 samples; the self-test also confirms rejection of a deliberately corrupted nonce byte.
+- Sample wall-clock windows each reported 7,700,000 completed nonce attempts over approximately 30.15–30.34 seconds, about 254–255 kH/s.
+- Separate hardware inner-loop measurements during subsequent live scans were about 266–267 kH/s; these are not the same measurement window as the wall-clock benchmark and should not be added to software-lane throughput.
+
+Limitations and future work:
+
+- Physical BM1370 UART communication, chip detection, actual mining work dispatch/receipt, nonzero rolled-version reconstruction, job mapping and stale/duplicate checking, and accepted pool-share behavior are not yet demonstrated.
+- The prior Core 1 software hashing experiment does not have a production target-and-submit path; do not count its `~17 kH/s` as productive solo-mining hashrate.
+- The two checked-in source files were exercised on the ESP32-S3; no GitHub Actions runs were found for the PR, so no automated CI validation is claimed.
+- Local `build_board_b/` and `*.bak` artifacts remained untracked on the Windows PC and were not included in PR #3.
+- The `main` branch was not modified by PR #3.
+
+Next: implement a block-safe ASIC candidate verification and job-mapping layer behind the existing protocol decoder, then connect to real BM1370 hardware only after communication and electrical checks.
 
 ---
 
