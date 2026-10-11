@@ -9,7 +9,9 @@ on:
       - feature/bm1370-integration
     paths:
       - 'tools/qhap_lab.py'
+      - 'tools/pico_bm1370_emulator.py'
       - 'tests/test_qhap_lab.py'
+      - 'tests/test_pico_bm1370_emulator.py'
       - 'research/PRE_ASIC_LAB_PLAN.md'
       - '.github/workflows/pre-asic-lab.yml'
 
@@ -26,6 +28,8 @@ jobs:
         with:
           python-version: '3.12'
       - name: Syntax-check coordinator
-        run: python -m py_compile tools/qhap_lab.py
+        run: python -m py_compile tools/qhap_lab.py tools/pico_bm1370_emulator.py
       - name: Verify deterministic lab unit tests
-        run: python -m unittest discover -s tests -p test_qhap_lab.py -v
+        run: |
+          python -m unittest discover -s tests -p test_qhap_lab.py -v
+          python -m unittest discover -s tests -p test_pico_bm1370_emulator.py -v
