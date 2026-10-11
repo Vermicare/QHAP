@@ -1,0 +1,31 @@
+name: Pre-ASIC QHAP lab tests
+
+on:
+  push:
+    branches:
+      - feature/pre-asic-experiment-lab
+  pull_request:
+    branches:
+      - feature/bm1370-integration
+    paths:
+      - 'tools/qhap_lab.py'
+      - 'tests/test_qhap_lab.py'
+      - 'research/PRE_ASIC_LAB_PLAN.md'
+      - '.github/workflows/pre-asic-lab.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  lab-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Syntax-check coordinator
+        run: python -m py_compile tools/qhap_lab.py
+      - name: Verify deterministic lab unit tests
+        run: python -m unittest discover -s tests -p test_qhap_lab.py -v
