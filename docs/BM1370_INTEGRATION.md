@@ -1,6 +1,6 @@
 # QHAP BM1370 Integration
 
-Status: **Phase A — protocol substrate**
+Status: **Phase A — protocol + virtual result path validated on ESP32-S3; physical BM1370 pending**
 
 Target hardware: **Bitaxe Gamma 602 / 1 × BM1370**.
 
@@ -62,6 +62,40 @@ The self-test reconstructs a known BM13xx command frame:
 ```
 
 This verifies the command header/length/CRC5 path.
+
+## Pre-hardware validation milestone — 2026-10-05
+
+The protocol and result-decoder layers have now been executed on the real ESP32-S3 target.
+
+Observed:
+
+```text
+BM1370 protocol self-test: PASS
+BM1370 mock self-test: PASS
+Hardware vs PSA: MATCH
+BM1370 mock live-header hash: MATCH
+```
+
+The live-header match was observed on multiple different CKPool jobs.
+
+The virtual path is:
+
+```text
+real CKPool mining.notify
+  -> QHAP coinbase / Merkle / 80-byte header
+  -> synthetic BM1370 result
+  -> BM1370 result decode
+  -> nonce reconstruction
+  -> exact header reconstruction
+  -> independent SHA256d
+  -> hash MATCH
+```
+
+During the same run, the existing native ESP32 SHA miner continued doing real Bitcoin work at about 270.23 kH/s. The mock BM1370 path is validation-only and adds no mining hashrate.
+
+This milestone validates controller-side integration logic only. It does **not** validate physical BM1370 UART timing, initialization, real job encoding, real returned nonce behavior or silicon compatibility.
+
+Before physical RX is trusted, QHAP must also implement and validate the exact checksum/CRC semantics for returned 11-byte result packets. The current decoder parses the final byte but does not yet use it as a hard integrity gate.
 
 ## Phase B — transport
 

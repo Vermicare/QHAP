@@ -167,6 +167,28 @@ Pool-share candidate / accepted share
 Bitcoin block found
 ```
 
+## Solo CKPool payout semantics
+
+QHAP is currently configured for **solo mining through solo.ckpool.org**, not a proportional shared-reward pool.
+
+That means an easier CKPool share is useful as proof/telemetry, but it does **not** accumulate a fractional Bitcoin balance. Under solo.ckpool.org's current published terms, shares are cosmetic for feedback and the service charges a **2% fee** if a miner actually solves a Bitcoin block.
+
+As of October 2026, Bitcoin's block subsidy is **3.125 BTC**, plus transaction fees. Therefore, with the current solo setup:
+
+```text
+ordinary hash / near miss      -> 0 BTC
+CKPool share only              -> 0 BTC payout by itself
+Bitcoin-network-valid block    -> full solo block reward, less CKPool's advertised fee
+```
+
+So QHAP does **not** gradually earn 0.001 BTC, 0.01 BTC, 0.1 BTC, etc. from partial work in the current solo configuration. It is effectively an all-or-nothing lottery at the payout level.
+
+At the current 3.125 BTC subsidy, a successful solo block would produce a reward greater than 1 BTC even after a 2% service fee, before considering positive transaction fees. This changes across future Bitcoin halvings and would also be different if QHAP were intentionally moved to a conventional pooled payout scheme.
+
+A coinbase reward is not immediately spendable; Bitcoin coinbase outputs mature after 100 blocks.
+
+Reference: solo.ckpool.org's current public terms and Bitcoin's current subsidy schedule should be rechecked whenever payout documentation is updated.
+
 ## What Are the Chances?
 
 QHAP is a genuine lottery miner, not an economically competitive Bitcoin miner.

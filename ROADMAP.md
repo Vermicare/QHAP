@@ -105,6 +105,29 @@ Potential responsibilities:
 
 The Pi should not become a single point of failure for actual hashing or submission if that can be avoided.
 
+## Priority 5B — QHAP Evolution Engine
+
+After the single-BM1370 path is correct and measurable, use the Raspberry Pi 5 as an experiment coordinator that can automatically generate, run, score and retain controller/ASIC strategies.
+
+The optimizer must never alter Bitcoin's consensus SHA256d algorithm. It may explore valid execution and control strategies such as:
+
+- work partitioning and chunk sizes;
+- job-switch scheduling;
+- controller task/core allocation;
+- safe build/compiler variants;
+- UART batching and transport behavior;
+- per-chip frequency/voltage/thermal settings inside hard safety limits;
+- fan/thermal policy;
+- heterogeneous ASIC scheduling.
+
+Candidate search methods may include evolutionary search, Bayesian optimization, multi-armed bandits, simulated annealing and champion/challenger testing.
+
+Primary metrics should include **useful verified hashes/s, hashes/joule, stale/duplicate fraction, error rate, temperature stability, job-switch latency and uptime**, rather than raw displayed hashrate alone.
+
+Every candidate must pass a deterministic correctness/safety gate before it can become production-eligible. The first implementation can use the existing Raspberry Pi 5, ESP32-S3 and incoming Gamma 602; extra ESP32 boards are optional later for parallel experiment lanes.
+
+This is a research direction, not yet a demonstrated QHAP performance advantage.
+
 ## Priority 6 — Quantum mining research
 
 Quantum work is a research track, not the first practical way to improve current Bitcoin-winning probability.
@@ -177,6 +200,29 @@ At a network hashrate near the order of 1 ZH/s, rough sustained solo-mining scal
 - sustained one block per minute is beyond 100% of the existing network at the same difficulty and would trigger difficulty adaptation
 
 These are order-of-magnitude planning figures. QHAP should calculate them dynamically from live difficulty/hashrate before making current estimates.
+
+## Solo payout interpretation
+
+For the current solo.ckpool.org configuration, **expected BTC/time** must not be confused with smooth periodic income.
+
+The miner receives no fractional payout merely for producing ordinary lower-difficulty pool shares. Actual payout is tied to solving a Bitcoin-network-valid block. Therefore the realized payout path is highly discontinuous even when the statistical expectation is well defined.
+
+As of October 2026:
+
+- subsidy: **3.125 BTC/block** plus transaction fees;
+- solo.ckpool.org published service fee: **2%**;
+- a current-era solved solo block is therefore greater than 1 BTC after the advertised service fee;
+- all non-winning work can still result in **0 BTC realized payout**.
+
+When comparing QHAP designs, use both:
+
+```text
+expected BTC/time
+and
+probability distribution / expected waiting time
+```
+
+Do not present expected value as if it were a smooth payout stream.
 
 ## Bitcoin-per-time interpretation
 
