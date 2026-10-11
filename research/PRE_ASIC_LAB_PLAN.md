@@ -7,12 +7,12 @@
 | Node | Role now | Important isolation |
 |---|---|---|
 | Original ESP32-S3 (historically called Board B) | **Reference/control:** current known-good live Stratum miner (wall-clock ~254–255 kH/s, hardware scan ~266–269 kH/s) | Do not reflash or inject mock frames |
-| New ESP32-S3 #1 | **Challenger:** independent ESP-IDF builds, controlled nonce-work and compiler/task experiments | Use a separate mining identity; do not publish fabricated work |
-| New ESP32-S3 #2 | **Protocol test receiver:** dedicated UART, job-switch, checksum and fault-handling experiments | Connect only to local synthetic sources, never CKPool |
+| Second ESP32-S3 (shown in later screenshot) | **Challenger:** independent ESP-IDF builds, controlled nonce-work and compiler/task experiments | Use a separate mining identity; do not publish fabricated work |
+| Third ESP32 (model not yet identified from screenshots) | **Protocol test receiver:** dedicated UART, job-switch, checksum and fault-handling experiments | Connect only to local synthetic sources, never CKPool |
 | Raspberry Pi 5 (8 GB) | **Linux supervisor:** ingest logs, run controlled trials/statistical tests, local Stratum mock server and Evolution Engine | Does not sit in the block-submission critical path |
 | Raspberry Pi Pico H (RP2040) | **Deterministic microcontroller stimulus:** synthesize BM1370-format result bytes, programmable UART delays/noise, later Programmable Input/Output (PIO) timing tests | Not a Linux computer, has no built-in Wi-Fi, and cannot emulate BM1370 hashrate |
 
-**Identity boundary:** This inventory reflects the user's reports and Raspberry Pi Pico H / Espressif ESP32-S3-DevKitC-1-N8R8 product screenshots. Confirm exact chip, board revision and flash capacity on each physical board at first USB connection. The Raspberry Pi **Pico H**, despite its name, does not run Raspberry Pi OS; the **Pi 5** is the Linux coordinator.
+**Identity boundary:** The first pair of product screenshots was one ESP32-S3-DevKitC-1-N8R8 and one Raspberry Pi 5 (8 GB). The later pair showed another ESP32-S3-DevKitC-1-N8R8 and a Raspberry Pi Pico H. The user reports three ESP32 boards total, but the exact model of the third is unverified; do not assume it is identical to the two pictured. Confirm exact chip, board revision and flash capacity on each physical board at first USB connection. The Raspberry Pi **Pico H**, despite its name, does not run Raspberry Pi OS; the **Pi 5** is the Linux coordinator.
 
 **Architecture:** USB serial (local logs) or later authenticated LAN telemetry from each ESP32 -> Pi collector -> SQLite/CSV/JSON run records -> correctness gates -> statistics -> champion/challenger report. The Pi should not be in the critical share submission path. The reference board remains autonomous.
 
@@ -52,11 +52,11 @@
 
 - **First:** On the Raspberry Pi, install/boot Raspberry Pi OS and enable SSH through Raspberry Pi Imager if running headless; keep the Pi and ESP32 boards on a trusted local network. Do not expose the Pi telemetry service or SSH to the public internet.
 - **Second:** Run `tools/qhap_lab.py` against saved log text files. The lab can be tested on the laptop before the Pi boots; it does not access mining pool credentials or change firmware.
-- **Third:** Connect new ESP32-S3 #1 to the Pi over USB and identify its exact model, serial port and firmware. Do the same separately for new ESP32-S3 #2; the original mining board stays untouched.
+- **Third:** Connect second ESP32-S3 to the Pi over USB and identify its exact model, serial port and firmware. Do the same separately for third ESP32 (unverified model); the original mining board stays untouched.
 - **Fourth:** Program the Pico H's MicroPython firmware, check its serial monitor independently, then run the synthetic packet generator from `tools/pico_bm1370_emulator.py` on the Pico (after USB-only tests). This does not exercise physical BM1370.
-- **Fifth:** With both boards disconnected from any public pool, optionally connect Pico H GP0 (physical pin 1) -> new ESP32-S3 #2 chosen RX GPIO, and Pico H GND -> ESP32 GND. Power each from its own USB. **Do not interconnect 5 V/VBUS/VSYS or 3.3 V power rails; never apply a 5 V signal to GPIO.** Validate selected ESP32 GPIO availability against that board's pinout before wiring.
+- **Fifth:** With both boards disconnected from any public pool, optionally connect Pico H GP0 (physical pin 1) -> third ESP32 (unverified model) chosen RX GPIO, and Pico H GND -> ESP32 GND. Power each from its own USB. **Do not interconnect 5 V/VBUS/VSYS or 3.3 V power rails; never apply a 5 V signal to GPIO.** Validate selected ESP32 GPIO availability against that board's pinout before wiring.
 - **Sixth:** Implement a local Pi simulated Stratum server for the fault matrix, then a telemetry link; keep the original miner out of these tests.
-- **Seventh:** Only after validation, run new ESP32-S3 #1 against real mining jobs using a distinct pool worker label and independently check non-overlap.
+- **Seventh:** Only after validation, run second ESP32-S3 against real mining jobs using a distinct pool worker label and independently check non-overlap.
 
 ### Stop/promotion rules
 
