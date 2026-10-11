@@ -6,11 +6,13 @@
 
 | Node | Role now | Important isolation |
 |---|---|---|
-| ESP32-S3 Board B | Control: current known-good live Stratum miner (observed wall-clock ~254–255 kH/s, hardware scan ~266–269 kH/s) | Do not reflash for the first lab experiments |
-| ESP32 Board A | Challenger: isolated alternative ESP-IDF builds, fault-injection and test receiver | Never submit fabricated work to a public mining pool |
-| Raspberry Pi 5 8 GB | Lab manager: parse logs, record experiment metadata, run tests, compare throughput/reliability, coordinate local simulated Stratum | Not the principal SHA256d mining engine; no paid cloud required |
+| Original ESP32-S3 (historically called Board B) | **Reference/control:** current known-good live Stratum miner (wall-clock ~254–255 kH/s, hardware scan ~266–269 kH/s) | Do not reflash or inject mock frames |
+| New ESP32-S3 #1 | **Challenger:** independent ESP-IDF builds, controlled nonce-work and compiler/task experiments | Use a separate mining identity; do not publish fabricated work |
+| New ESP32-S3 #2 | **Protocol test receiver:** dedicated UART, job-switch, checksum and fault-handling experiments | Connect only to local synthetic sources, never CKPool |
+| Raspberry Pi 5 (8 GB) | **Linux supervisor:** ingest logs, run controlled trials/statistical tests, local Stratum mock server and Evolution Engine | Does not sit in the block-submission critical path |
+| Raspberry Pi Pico H (RP2040) | **Deterministic microcontroller stimulus:** synthesize BM1370-format result bytes, programmable UART delays/noise, later Programmable Input/Output (PIO) timing tests | Not a Linux computer, has no built-in Wi-Fi, and cannot emulate BM1370 hashrate |
 
-**Identity boundary:** The precise model/firmware of Board A has not been independently verified; do not assume the same MCU or baseline throughput. Confirm the model when attaching it.
+**Identity boundary:** This inventory reflects the user's reports and Raspberry Pi Pico H / Espressif ESP32-S3-DevKitC-1-N8R8 product screenshots. Confirm exact chip, board revision and flash capacity on each physical board at first USB connection. The Raspberry Pi **Pico H**, despite its name, does not run Raspberry Pi OS; the **Pi 5** is the Linux coordinator.
 
 **Architecture:** USB serial (local logs) or later authenticated LAN telemetry from each ESP32 -> Pi collector -> SQLite/CSV/JSON run records -> correctness gates -> statistics -> champion/challenger report. The Pi should not be in the critical share submission path. The reference board remains autonomous.
 
@@ -22,7 +24,9 @@
 | E1 | Two-board independent work | Board B live; Board A on independent authenticated Stratum session, separate worker label | Unique pool-assigned extranonce1/job identity; combined useful hashes/sec; no repeated nonce/header pairs | Yes, after Board A validated |
 | E2 | Local deterministic pool adversarial tests | Board A connects only to Pi mock Stratum server, Board B untouched | Handle split TCP frames, delayed difficulty, clean_jobs, reconnects, stale candidates, partial sends | Yes |
 | E3 | Mutation/evolution search | Board A candidate parameter sets vs Board B untouched reference | Correctness first; compare median/weighted wall-clock rate, error rate, restarts, stale work | Yes |
-| E4 | BM1370 protocol/candidate simulator | Pi generates correctly checksummed synthetic results; candidate gate is isolated | Nonzero rolled version, exact header reconstruction, stale ID, duplicates, CRC errors, target verification | Yes; physical ASIC validation pending |
+| E4 | BM1370 protocol/candidate simulator | Pico H -> third ESP32 over 3.3 V UART, with Pi-managed test vectors; isolated from live pool | Valid/corrupt CRC5, controlled delays, nonzero rolled version, exact header and target checks; reject stale ID / duplicates | Yes; physical ASIC validation pending |
+| E4a | Controller transport resilience | Pico H sends burst, partial, repeated, delayed synthetic frames to third ESP32 | Receiver resynchronization, no buffer overflow, zero external fake shares | Yes |
+| E4b | PIO hardware timing experiment | Pico H RP2040 PIO against third ESP32 UART input | Timestamped jitter/latency distribution at safe 3.3 V levels | Yes, after a simple UART baseline |
 | E5 | Sustained 24-hour reliability | Board B remains live; Board A alternative firmware | Uptime, reconnect speed, watchdog restarts, useful attempted hashes | Yes, only after short-run correctness gates |
 | E6 | Energy efficiency | Board A vs Board B under measured comparable power input | Hashes/J **only when external power measurement exists** | Defer power claims until measured |
 | E7 | ASIC frequency/voltage tuning | Physical BM1370 with known safe limits | Real TH/s, temperature, errors and joules | No; requires ASIC |
@@ -42,15 +46,17 @@
 5. Compare equal-duration runs with at least ten 30-second windows each as a **screening** threshold. Repeat promising comparisons across three alternating trials (A/B/A or B/A/B), taking heat, Wi-Fi, workload and background activity into account. No statistical-significance claim from a few windows.
 6. A <3% gain is not enough to promote production changes based on earlier QHAP criteria. 3–10% remains experimental; >10% may justify integration **only after** correctness, reliable submissions, stable long runs, and power/thermal review.
 7. Fault-injection, mock ASIC results, low artificial targets and locally forged shares must stay strictly on a **local test service**. Never send fake shares to CKPool.
-8. Current solo CKPool setup does not pay fractional BTC for non-winning shares. Even two ESP32 miners together do not approach an economically meaningful block probability compared with ASICs.
+8. Current solo CKPool setup does not pay fractional BTC for non-winning shares. Even three ESP32 miners together do not approach an economically meaningful block probability compared with ASICs.
 
 ## Local lab launch order
 
 - **First:** On the Raspberry Pi, install/boot Raspberry Pi OS and enable SSH through Raspberry Pi Imager if running headless; keep the Pi and ESP32 boards on a trusted local network. Do not expose the Pi telemetry service or SSH to the public internet.
 - **Second:** Run `tools/qhap_lab.py` against saved log text files. The lab can be tested on the laptop before the Pi boots; it does not access mining pool credentials or change firmware.
-- **Third:** Connect Board A to the Pi using its own USB cable. Identify device/serial port, use a read-only monitor, and verify Board A's hardware model and firmware.
-- **Fourth:** Implement a local simulated Stratum server for the fault matrix, then a telemetry link; keep Board B out of these tests.
-- **Fifth:** Only after validation, run Board A against real mining jobs using a distinct pool worker label and independently check non-overlap.
+- **Third:** Connect new ESP32-S3 #1 to the Pi over USB and identify its exact model, serial port and firmware. Do the same separately for new ESP32-S3 #2; the original mining board stays untouched.
+- **Fourth:** Program the Pico H's MicroPython firmware, check its serial monitor independently, then run the synthetic packet generator from `tools/pico_bm1370_emulator.py` on the Pico (after USB-only tests). This does not exercise physical BM1370.
+- **Fifth:** With both boards disconnected from any public pool, optionally connect Pico H GP0 (physical pin 1) -> new ESP32-S3 #2 chosen RX GPIO, and Pico H GND -> ESP32 GND. Power each from its own USB. **Do not interconnect 5 V/VBUS/VSYS or 3.3 V power rails; never apply a 5 V signal to GPIO.** Validate selected ESP32 GPIO availability against that board's pinout before wiring.
+- **Sixth:** Implement a local Pi simulated Stratum server for the fault matrix, then a telemetry link; keep the original miner out of these tests.
+- **Seventh:** Only after validation, run new ESP32-S3 #1 against real mining jobs using a distinct pool worker label and independently check non-overlap.
 
 ### Stop/promotion rules
 
@@ -68,7 +74,7 @@ With Bitaxe Gamma 602 physically present: backup stock firmware; confirm 5 V sup
 
 ## Source references
 
-- [QHAP Project Memory](../PROJECT_MEMORY.md) sections 20B–20F.
+- [QHAP Project Memory](../PROJECT_MEMORY.md) sections 20B–20H.
 - [QHAP Roadmap](../ROADMAP.md) priorities 1–5B.
 - [Dual-engine research PR #2](https://github.com/Vermicare/QHAP/pull/2).
 - [BM1370 CRC5 PR #3](https://github.com/Vermicare/QHAP/pull/3).
@@ -76,4 +82,4 @@ With Bitaxe Gamma 602 physically present: backup stock firmware; confirm 5 V sup
 
 ## Status disclaimer
 
-This file records a planned experiment sequence, not experimentally validated improvements for Board A, the Pi or a physical BM1370.
+This file records a planned experiment sequence, not experimentally validated improvements for either new ESP32, the Pi 5, Pico H or a physical BM1370. The original miner's historical performance is not a benchmark for untested new boards.

@@ -1136,6 +1136,26 @@ Immediate next hardware interaction: confirm Pi OS and secure local SSH availabi
 
 ---
 
+## 20H. Corrected physical inventory and Pico H emulator — reported 2026-10-11
+
+The user clarified inventory after PR #5: **three ESP32 boards total** (original running QHAP plus two newly acquired Espressif ESP32-S3-DevKitC-1-N8R8 units) and **two Raspberry Pi-branded boards** (the previously noted Raspberry Pi 5 8 GB and a newly acquired **Raspberry Pi Pico H RP2040** with soldered pin headers). This is **five development boards total**; the Bitaxe Gamma 602/BM1370 is still not delivered.
+
+**Important product distinction:** the Pico H is an RP2040 microcontroller without built-in Wi-Fi; it cannot run Raspberry Pi OS, SSH or the Pi 5's Linux experiment coordinator. Its programmable I/O state machines and UART can instead simulate a BM1370 **protocol-level response source** for the third ESP32. These are model identifications from supplied product screenshots/user statement, not physical USB enumeration or installed-firmware verification.
+
+Updated safe lab assignments:
+
+1. Original ESP32 (formerly "Board B" in experimental records): preserve stable real Bitcoin mining against CKPool.
+2. New ESP32-S3 #1: isolated challenger for compiler, scheduling, midstate and independent mining experiments.
+3. New ESP32-S3 #2: dedicated isolated controller that ingests synthetic BM1370 result frames and simulates faults; must never submit synthetic results to a public pool.
+4. Raspberry Pi 5 8 GB: Linux experiment coordinator, telemetry/statistical comparison and optional local mock Stratum service.
+5. Raspberry Pi Pico H: microcontroller-based controlled UART/PIO stimulus, not a second Linux Raspberry Pi.
+
+`research/PRE_ASIC_LAB_PLAN.md` is updated. New `tools/pico_bm1370_emulator.py` is an **explicit opt-in**, non-mining MicroPython UART packet generator: it emits BM1370-shaped result bytes with residue-zero CRC5 and optional intentional corruption. Its golden-vector tests match the existing QHAP synthetic packet. Electrical plan: separately USB-powered boards, Pico GP0 TX to the experimental ESP32 RX, shared GND, 3.3 V signal only; no 5 V lines or tied power rails. Do not wire anything to the production miner. Host unit tests do not constitute physical compatibility testing.
+
+Important next confirmation: determine whether the Pi 5 has booted Raspberry Pi OS and which ESP32 board/COM-port is currently the stable miner. Do not invent live measurements for newly purchased boards or Pico.
+
+---
+
 ## 21. Workflow rules for future QHAP sessions
 
 These are important because previous sessions became inefficient when verification loops repeated.
