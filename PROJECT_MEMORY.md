@@ -1120,6 +1120,22 @@ Next: implement a block-safe ASIC candidate verification and job-mapping layer b
 
 ---
 
+## 20G. Two-ESP32 + Raspberry Pi pre-ASIC lab — prepared 2026-10-11
+
+The user confirmed that the Bitaxe Gamma 602/BM1370 has **not** yet arrived, but there are **two ESP32 boards** and a **Raspberry Pi 5 (8 GB)** available.
+
+GitHub [PR #5](https://github.com/Vermicare/QHAP/pull/5) merged into `feature/bm1370-integration` (merge commit `cdd1fe9`), adding:
+
+- [Pre-ASIC experiment plan](research/PRE_ASIC_LAB_PLAN.md) assigning current Board B as untouched live-mining reference, Board A as challenger, and Pi 5 as research supervisor;
+- `tools/qhap_lab.py` — a read-only, standard-library Python analyzer of ESP32 serial output that distinguishes real wall-clock throughput from inner-loop rates and explicitly avoids automatic deployment;
+- `tests/test_qhap_lab.py` and GitHub Actions tests including incomplete/bad measurements, SHA mismatch refusal, and minimum-window screening requirements.
+
+GitHub Actions **completed successfully** for this host-side software, but **nothing has run on the Raspberry Pi or second ESP32 yet**; Board A's exact model/configuration still needs to be verified when connected.
+
+Immediate next hardware interaction: confirm Pi OS and secure local SSH availability; then collect Board B reference logs and identify Board A. Do not interrupt Board B mining to conduct fault injection; use a local mock Stratum on Pi only for Board A tests. The Pi optimizer must not mutate SHA256d consensus, fabricate pool shares, claim energy efficiency without power measurements, or flash production boards on its own.
+
+---
+
 ## 21. Workflow rules for future QHAP sessions
 
 These are important because previous sessions became inefficient when verification loops repeated.
