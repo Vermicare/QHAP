@@ -1138,15 +1138,17 @@ Immediate next hardware interaction: confirm Pi OS and secure local SSH availabi
 
 ## 20H. Corrected physical inventory and Pico H emulator — reported 2026-10-11
 
-The user clarified inventory after PR #5: **three ESP32 boards total** (original running QHAP plus two newly acquired Espressif ESP32-S3-DevKitC-1-N8R8 units) and **two Raspberry Pi-branded boards** (the previously noted Raspberry Pi 5 8 GB and a newly acquired **Raspberry Pi Pico H RP2040** with soldered pin headers). This is **five development boards total**; the Bitaxe Gamma 602/BM1370 is still not delivered.
+The user clarified inventory after PR #5: **three ESP32 boards total** (the original ESP32-S3-DevKitC-1-N8R8, a second ESP32-S3-DevKitC-1-N8R8 pictured later, and a third ESP32 with an as-yet unverified model) and **two Raspberry Pi-branded boards** (the previously noted Raspberry Pi 5 8 GB and a newly acquired **Raspberry Pi Pico H RP2040** with soldered pin headers). This is **five development boards total**; the Bitaxe Gamma 602/BM1370 is still not delivered.
+
+**Purchase chronology clarified:** The first two purchases shown were **one ESP32-S3-DevKitC-1-N8R8** and **one Raspberry Pi 5 (8 GB)**. The later two screenshots show **one further ESP32-S3-DevKitC-1-N8R8** and **one Raspberry Pi Pico H**. The user reports three ESP32 units total; the third board's exact model has not been established by the screenshots.
 
 **Important product distinction:** the Pico H is an RP2040 microcontroller without built-in Wi-Fi; it cannot run Raspberry Pi OS, SSH or the Pi 5's Linux experiment coordinator. Its programmable I/O state machines and UART can instead simulate a BM1370 **protocol-level response source** for the third ESP32. These are model identifications from supplied product screenshots/user statement, not physical USB enumeration or installed-firmware verification.
 
 Updated safe lab assignments:
 
 1. Original ESP32 (formerly "Board B" in experimental records): preserve stable real Bitcoin mining against CKPool.
-2. New ESP32-S3 #1: isolated challenger for compiler, scheduling, midstate and independent mining experiments.
-3. New ESP32-S3 #2: dedicated isolated controller that ingests synthetic BM1370 result frames and simulates faults; must never submit synthetic results to a public pool.
+2. Second ESP32-S3 (later screenshot): isolated challenger for compiler, scheduling, midstate and independent mining experiments.
+3. Third ESP32 (hardware model pending): dedicated isolated controller that ingests synthetic BM1370 result frames and simulates faults; must never submit synthetic results to a public pool.
 4. Raspberry Pi 5 8 GB: Linux experiment coordinator, telemetry/statistical comparison and optional local mock Stratum service.
 5. Raspberry Pi Pico H: microcontroller-based controlled UART/PIO stimulus, not a second Linux Raspberry Pi.
 
