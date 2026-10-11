@@ -1136,23 +1136,23 @@ Immediate next hardware interaction: confirm Pi OS and secure local SSH availabi
 
 ---
 
-## 20H. Corrected physical inventory and Pico H emulator — user-confirmed 2026-10-11
+## 20H. Hardware inventory clarification and Pico H emulator — user-confirmed 2026-10-11
 
-**Latest direct clarification supersedes earlier duplicate-product assumptions:** The user owns **three ESP32 boards in total**, but **only one Espressif ESP32-S3-DevKitC-1-N8R8**. The other **two ESP32 models are not yet identified**. The earlier same-model screenshots referred to the same product, *not* proof of two N8R8 units. The user also owns **one Raspberry Pi 5 (8 GB)** and **one Raspberry Pi Pico H (RP2040)** — two Raspberry Pi-branded boards with very different capabilities. The Bitaxe Gamma 602/BM1370 has **not arrived**.
+**Latest user clarification supersedes earlier contradictory interpretations of repeated product screenshots:** There are **three ESP32 boards in total**: **two Espressif ESP32-S3-DevKitC-1-N8R8** units of the pictured model, plus **one third ESP32 whose model is not yet identified**. The user also owns **one Raspberry Pi 5 (8 GB)** and **one Raspberry Pi Pico H (RP2040)**. This is **five boards available**, with the **Bitaxe Gamma 602 / BM1370 pending delivery**. The first purchase pair was one N8R8 and one Pi 5. The second N8R8 is confirmed by the user's latest explicit statement, not inferred from a duplicate image.
 
-Verified by screenshots/user description: the first purchase pair was **one ESP32-S3-DevKitC-1-N8R8 plus one Raspberry Pi 5 (8 GB)**. The user separately reported the Pico H and total number of ESP32 boards. No physical USB enumeration of any board has been performed here; the other ESP32 chips, memory, pinouts and Wi-Fi capability must not be assumed.
+No physical USB enumeration of the two N8R8 units or third ESP32 has been performed in this chat; serial identity and currently flashed firmware must still be confirmed before hardware changes.
 
-Safe *provisional* assignments (confirm after identifying the two unknown ESP32 models):
+Safe provisional assignments:
 
-1. **Known ESP32-S3 N8R8**: preserve current known-good QHAP miner if this is the board running the validated firmware. Confirm identity before any physical operation; never flash or connect synthetic UART to the production miner.
-2. **Other ESP32 A (exact model unknown)**: tentative challenger for compiler/task scheduling/hash performance, only after hardware capabilities and firmware target are identified.
-3. **Other ESP32 B (exact model unknown)**: tentative isolated synthetic-UART test receiver, only after confirming the board's RX GPIO and 3.3 V electrical interface.
-4. **Raspberry Pi 5, 8 GB**: Linux experiment coordinator, log analysis, telemetry and local mock Stratum service. Its installed Raspberry Pi OS/SSH status is not yet known.
-5. **Raspberry Pi Pico H, RP2040**: MicroPython UART/Programmable I/O synthetic BM1370 packet emitter. It cannot run Raspberry Pi OS or replace the Pi 5's Linux role.
+1. **ESP32-S3 N8R8 #1**: live-mining reference. Preserve the board already running QHAP, regardless of physical label, and do not reflash or connect to synthetic UART.
+2. **ESP32-S3 N8R8 #2**: matched challenger for SHA256d implementations, scheduler, compiler settings, and independent mining experiments. Match board revision/power/measurement environment before comparing rates.
+3. **Third ESP32 (model pending)**: separate synthetic BM1370 UART receiver, after verifying 3.3 V RX GPIO support, actual chip, serial and memory capabilities.
+4. **Raspberry Pi 5 (8 GB)**: Linux Evolution Engine experiment coordinator, log analyzer, controlled test runner and local mock Stratum server. Operating system / remote access state not yet established.
+5. **Raspberry Pi Pico H (RP2040)**: MicroPython UART / Programmable I/O stimulus producing BM1370-format synthetic responses. It is not a second Linux Pi and cannot simulate real ASIC hash throughput.
 
-`research/PRE_ASIC_LAB_PLAN.md` defines the provisional assignments. `tools/pico_bm1370_emulator.py` is an opt-in, **synthetic result** generator; its host software checks do not demonstrate real ASIC mining. If performing Pico -> ESP32 tests, power boards separately from USB; connect Pico GP0 TX to the confirmed safe test ESP32 RX, share only GND, use 3.3 V signalling, and never connect power rails or the live mining board.
+`research/PRE_ASIC_LAB_PLAN.md` contains the operating plan. `tools/pico_bm1370_emulator.py` emits *mock* packets only; passing host CI does not prove UART or physical BM1370 compatibility. For Pico -> test ESP32 use independently USB-powered boards, 3.3 V signalling, a shared ground and confirmed-safe RX GPIO; never connect power rails or the production miner.
 
-**Next hardware questions:** identify the two other ESP32 board models, and confirm Raspberry Pi 5 OS/boot status. Maintain exact device identity in future QHAP plans; don't infer quantity from repeated Amazon screenshots.
+**Next user-supplied prerequisites**: identify the third ESP32 model and confirm whether the Pi 5 has booted Raspberry Pi OS. Neither should block existing GitHub-based host research.
 
 ---
 
