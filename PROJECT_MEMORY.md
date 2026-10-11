@@ -1152,7 +1152,7 @@ Safe experimental assignments:
 
 Updated documentation: `research/PRE_ASIC_LAB_PLAN.md`. Optional `tools/pico_bm1370_emulator.py` remains strictly isolated, synthetic-only. For future physical Pico-to-ESP32 tests, separately USB power the two devices and use a shared GND, confirmed 3.3 V RX GPIO and no tied power rails; never wire the production miner.
 
-**Next practical checkpoint:** confirm if the Pi 5 has booted Raspberry Pi OS. Then enumerate the three N8R8 units and label them by USB serial port / current flashed role before deploying experimental firmware.
+**Raspberry Pi setup status (user-confirmed 2026-10-11):** Neither Raspberry Pi-branded board has been touched or configured. The Raspberry Pi 5 (8 GB) has not yet been set up with Raspberry Pi OS, and the Pico H (RP2040) has not been programmed. **Next practical step:** on the Windows laptop install the official Raspberry Pi Imager, then prepare a dedicated microSD for the Pi 5 with headless/network settings (follow the on-screen setup; do not overwrite a drive with useful data). Boot the Pi 5 and validate access before programming the Pico H. Preserve the working ESP32 miner; label all three N8R8 units by serial port / current firmware before deploying experimental builds.
 
 ---
 
