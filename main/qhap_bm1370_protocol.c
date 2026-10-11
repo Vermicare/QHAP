@@ -127,6 +127,11 @@ bool qhap_bm1370_decode_result(const uint8_t raw[QHAP_BM1370_RESULT_SIZE],
     if (raw[0] != 0xAAU || raw[1] != 0x55U)
         return false;
 
+    /* Valid BM1370 response: CRC5 residue is zero. */
+    if (qhap_bm1370_crc5(
+            raw + 2, QHAP_BM1370_RESULT_SIZE - 2U) != 0U)
+        return false;
+
     memset(out, 0, sizeof(*out));
 
     out->nonce = qhap_read_be32(raw + 2);

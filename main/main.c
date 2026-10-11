@@ -1,3 +1,4 @@
+#define QHAP_NONCE_BATCH_SIZE 100000U
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
@@ -440,9 +441,10 @@ static bool qhap_submit_share(uint32_t nonce)
 
     return true;
 }
+static uint64_t g_qhap_measured_hashes = 0;
 static void qhap_live_nonce_scan(const uint8_t base_header[80], uint32_t start_nonce)
 {
-    const uint32_t max_iterations = 100000U;
+    const uint32_t max_iterations = QHAP_NONCE_BATCH_SIZE;
 
     uint64_t remaining =
         (uint64_t)UINT32_MAX - (uint64_t)start_nonce + 1ULL;
@@ -636,6 +638,7 @@ static void qhap_live_nonce_scan(const uint8_t base_header[80], uint32_t start_n
 
     int64_t elapsed_us =
         esp_timer_get_time() - start_us;
+    g_qhap_measured_hashes += iterations;
 
     esp_sha_release_hardware();
 
@@ -1549,6 +1552,33 @@ void app_main(void)
 
     while (true) {
 
+        static int64_t measurement_start_us = 0;
+        int64_t measurement_now_us = esp_timer_get_time();
+
+        if (measurement_start_us == 0) {
+            measurement_start_us = measurement_now_us;
+        }
+
+        int64_t measurement_elapsed_us =
+            measurement_now_us - measurement_start_us;
+
+        if (measurement_elapsed_us >= 30000000LL) {
+            double wall_seconds =
+                (double)measurement_elapsed_us / 1000000.0;
+
+            printf("\n=== QHAP WALL-TIME MEASUREMENT ===\n");
+            printf("Batch size: %lu\n",
+                   (unsigned long)QHAP_NONCE_BATCH_SIZE);
+            printf("Completed hashes: %llu\n",
+                   (unsigned long long)g_qhap_measured_hashes);
+            printf("Elapsed: %.3f seconds\n", wall_seconds);
+            printf("Overall rate: %.2f kH/s\n",
+                   (double)g_qhap_measured_hashes / wall_seconds / 1000.0);
+
+            g_qhap_measured_hashes = 0;
+            measurement_start_us = measurement_now_us;
+        }
+
         int rx = qhap_receive_available(sock);
 
         if (rx < 0) {
@@ -1598,7 +1628,7 @@ void app_main(void)
             /*
              * Advance without repeating nonce work.
              */
-            if (next_nonce > UINT32_MAX - 100000U) {
+            if (next_nonce > UINT32_MAX - QHAP_NONCE_BATCH_SIZE) {
 
                 printf("Nonce space exhausted for current extranonce2\n");
 
@@ -1640,7 +1670,7 @@ void app_main(void)
 
             } else {
 
-                next_nonce += 100000U;
+                next_nonce += QHAP_NONCE_BATCH_SIZE;
             }
 
             /*
