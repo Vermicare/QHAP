@@ -3,14 +3,14 @@
 Works with Pico MicroPython. Packet builders are also CPython-compatible
 for host-only tests. This is NOT a BM1370 ASIC, Bitcoin miner, or pool client.
 
-Manual Pico MicroPython REPL use (after powering Pico and experimental
+Manual Pico MicroPython REPL use (after powering Pico and confirmed 3.3 V-compatible experimental
 ESP32 via separate USB leads and verifying 3.3 V signal wiring):
     import pico_bm1370_emulator as mock
     mock.start_uart_test(frames=10)
 
 Wiring only for the later physical UART test:
-    Pico H GP0 (physical pin 1)  -> experimental ESP32-S3 #2 chosen RX GPIO
-    Pico H GND (physical pin 3)  -> experimental ESP32-S3 #2 GND
+    Pico H GP0 (physical pin 1)  -> experimental ESP32's verified 3.3 V RX GPIO
+    Pico H GND (physical pin 3)  -> experimental ESP32 GND
 Do not connect Pico VBUS/VSYS/3V3 to the ESP32's power pins.
 DO NOT connect to the known-good live Bitcoin miner or public pool.
 """
@@ -71,7 +71,7 @@ def start_uart_test(frames=10, baud=115200, gap_ms=1000,
     """Transmit a small finite stream only after explicit REPL invocation.
 
     Pico UART0 TX=GP0; RX=GP1 (unused by this simple output test).
-    The receiver must be the ISOLATED experimental ESP32-S3 #2, never
+    The receiver must be the ISOLATED experimental ESP32 (model to be identified), never
     the original production miner. Synthetic frames are not shares.
     """
     if not 1 <= frames <= 1000:
