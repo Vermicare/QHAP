@@ -1156,6 +1156,18 @@ Updated documentation: `research/PRE_ASIC_LAB_PLAN.md`. Optional `tools/pico_bm1
 
 ---
 
+## 20I. Raspberry Pi 5 microSD filesystem recovery — 2026-10-13
+
+**Status: unresolved; hardware failure not proven.** Supersedes the Raspberry Pi 5 'not yet configured' setup status in 20H. A dedicated Raspberry Pi OS microSD was prepared; a separate laptop running live Ubuntu was used to investigate extensive EXT4 `rootfs` block bitmap/checksum and free-block accounting inconsistencies. Earlier `e2fsck -f -n` exited 4; automatic and earlier interactive checks did not establish a clean result. The latest `e2fsck -f` was canceled at an interactive `Fix<y>?` question because the proposed bitmap changes were extensive. The `dumpe2fs` superblock 'clean' flag does not negate the errors. Filtered kernel logs did not show explicit storage I/O errors or USB resets, but card/reader health and the original cause remain unknown.
+
+A read-only `ro,noload` mount made `/home/qhap/qhap` accessible (~576 KiB; `/home/qhap` ~644 KiB). The user's complete home directory, including hidden files and Git metadata, was encrypted into `qhap-home-backup-2026-10-13.tar.gz.gpg` (~192 KiB). Local GPG decryption and compressed archive listing printed `BACKUP VERIFIED`; a Google Drive browser screenshot showed the uploaded file in My Drive. **The backup is only the home directory, not a complete Raspberry Pi OS image.** Remote download/hash verification is still outstanding. The microSD EXT4 and boot partitions were confirmed unmounted at the last check. No subsequent filesystem repair, OS reinstall, or successful Pi boot has been confirmed.
+
+**Recovery requirements:** protect any unique files under `/etc`, `/var`, `/boot/firmware` or other locations before accepting large repairs; re-identify the target block device before every risky operation; avoid the laptop's BitLocker SSD and live Ubuntu installer; obtain informed consent before repair/reflash; never run `fsck -y` or destructive writes reflexively. A full-card image requires roughly 128 GB on separate storage if needed. Keep production ESP32 miners isolated.
+
+**Detailed incident, decision gates, verification and prevention:** [Raspberry Pi 5 storage recovery runbook](research/RPI5_STORAGE_RECOVERY.md). This recovery incident is a project operations milestone; do not silently treat it as a validated repair.
+
+---
+
 ## 21. Workflow rules for future QHAP sessions
 
 These are important because previous sessions became inefficient when verification loops repeated.
