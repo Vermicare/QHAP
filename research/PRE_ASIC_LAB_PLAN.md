@@ -48,6 +48,8 @@
 7. Fault-injection, mock ASIC results, low artificial targets and locally forged shares must stay strictly on a **local test service**. Never send fake shares to CKPool.
 8. Current solo CKPool setup does not pay fractional BTC for non-winning shares. Even three ESP32 miners together do not approach an economically meaningful block probability compared with ASICs.
 
+> **Raspberry Pi storage recovery gate (2026-10-13):** Pi OS microSD `rootfs` has unresolved EXT4 allocation metadata inconsistencies. The Pi is **not cleared for unattended QHAP experiments**. The user's home directory was backed up as an encrypted archive and visibly uploaded to Drive, but the OS was not fully imaged. Follow the [Pi storage incident and recovery runbook](RPI5_STORAGE_RECOVERY.md); verify filesystem health, reliable boot and storage backup before resuming this launch sequence. Keep the production ESP32 reference miner untouched.
+
 ## Local lab launch order
 
 - **First:** On the Raspberry Pi 5, install/boot Raspberry Pi OS and enable SSH through Raspberry Pi Imager if running headless; keep the Pi and ESP32 boards on a trusted local network. Do not expose the Pi telemetry service or SSH to the public internet.
