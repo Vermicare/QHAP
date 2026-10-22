@@ -6,6 +6,7 @@
 #include <sys/time.h>
 
 #include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 #include "freertos/event_groups.h"
 
 #include "esp_event.h"
@@ -23,6 +24,7 @@
 #include "esp_timer.h"
 #include "sha/sha_core.h"
 #include "hal/sha_ll.h"
+#include "software_sha256.h"
 
 #define WIFI_CONNECTED_BIT BIT0
 #define WIFI_FAIL_BIT      BIT1
@@ -30,6 +32,11 @@
 
 static EventGroupHandle_t wifi_event_group;
 static int retry_count = 0;
+
+static portMUX_TYPE g_sw_worker_mux = portMUX_INITIALIZER_UNLOCKED;
+static uint8_t g_sw_worker_header[80];
+static volatile uint32_t g_sw_worker_generation = 0;
+static volatile uint8_t g_sw_worker_sink = 0;
 
 static char g_extranonce1[65] = {0};
 static int g_extranonce2_size = 0;
@@ -438,6 +445,123 @@ static bool qhap_submit_share(uint32_t nonce)
 
     return true;
 }
+static void qhap_software_worker(void *arg)
+{
+    (void)arg;
+
+    uint8_t header[80];
+    uint8_t hash[32];
+    uint32_t sw_midstate[8];
+
+    uint32_t local_generation = 0;
+    uint32_t top_nonce = UINT32_MAX;
+
+    const uint32_t chunk_size = 100000U;
+
+    while (true) {
+
+        uint32_t generation;
+
+        portENTER_CRITICAL(&g_sw_worker_mux);
+        generation = g_sw_worker_generation;
+
+        if (generation != 0 &&
+            generation != local_generation) {
+            memcpy(header,
+                   g_sw_worker_header,
+                   sizeof(header));
+        }
+
+        portEXIT_CRITICAL(&g_sw_worker_mux);
+
+        if (generation == 0) {
+            vTaskDelay(pdMS_TO_TICKS(20));
+            continue;
+        }
+
+        if (generation != local_generation) {
+            local_generation = generation;
+            top_nonce = UINT32_MAX;
+
+            qhap_sw_sha256_midstate_64(
+                header,
+                sw_midstate);
+
+            printf("\n[SW CORE1] New mining job activated\n");
+        }
+
+        uint64_t available =
+            (uint64_t)top_nonce + 1ULL;
+
+        uint32_t iterations =
+            available < chunk_size
+                ? (uint32_t)available
+                : chunk_size;
+
+        uint32_t low_nonce =
+            top_nonce - iterations + 1U;
+
+        int64_t start_us = esp_timer_get_time();
+
+        for (uint32_t i = 0;
+             i < iterations;
+             i++) {
+
+            uint32_t nonce = top_nonce - i;
+
+            header[76] = (uint8_t)(nonce);
+            header[77] = (uint8_t)(nonce >> 8);
+            header[78] = (uint8_t)(nonce >> 16);
+            header[79] = (uint8_t)(nonce >> 24);
+
+            qhap_sw_sha256d_80_from_midstate(
+                sw_midstate,
+                header + 64,
+                hash);
+
+            /*
+             * Core 1 watchdog service point.
+             * Briefly block every 1024 hashes so IDLE1
+             * can run without abandoning the experiment.
+             */
+            if ((i & 0x3FFU) == 0x3FFU)
+                vTaskDelay(1);
+        }
+
+        int64_t elapsed_us =
+            esp_timer_get_time() - start_us;
+
+        g_sw_worker_sink = hash[0];
+
+        uint32_t current_generation;
+
+        portENTER_CRITICAL(&g_sw_worker_mux);
+        current_generation = g_sw_worker_generation;
+        portEXIT_CRITICAL(&g_sw_worker_mux);
+
+        if (current_generation != local_generation)
+            continue;
+
+        double seconds =
+            (double)elapsed_us / 1000000.0;
+
+        double rate =
+            (double)iterations / seconds;
+
+        printf("[SW CORE1] Rate: %.2f kH/s | nonce %lu -> %lu\n",
+               rate / 1000.0,
+               (unsigned long)top_nonce,
+               (unsigned long)low_nonce);
+
+        if (low_nonce == 0)
+            top_nonce = UINT32_MAX;
+        else
+            top_nonce = low_nonce - 1U;
+
+        taskYIELD();
+    }
+}
+
 static void qhap_live_nonce_scan(const uint8_t base_header[80], uint32_t start_nonce)
 {
     const uint32_t max_iterations = 100000U;
@@ -1214,6 +1338,43 @@ static void process_stratum_line(const char *line)
                                            ? "MATCH"
                                            : "MISMATCH");
 
+                                uint8_t sw_hash[32];
+                                qhap_sw_sha256d(header, sizeof(header), sw_hash);
+
+                                printf("Software SHA256d raw: ");
+
+                                for (int i = 0; i < 32; i++)
+                                    printf("%02x", sw_hash[i]);
+
+                                printf("\nSoftware vs PSA: %s\n",
+                                       memcmp(sw_hash, header_hash, 32) == 0
+                                           ? "MATCH"
+                                           : "MISMATCH");
+
+                                printf("Hardware vs Software: %s\n",
+                                       memcmp(hw_hash, sw_hash, 32) == 0
+                                           ? "MATCH"
+                                           : "MISMATCH");
+
+                                uint32_t midstate_test[8];
+                                uint8_t midstate_hash[32];
+
+                                qhap_sw_sha256_midstate_64(
+                                    header,
+                                    midstate_test);
+
+                                qhap_sw_sha256d_80_from_midstate(
+                                    midstate_test,
+                                    header + 64,
+                                    midstate_hash);
+
+                                printf("Midstate vs PSA: %s\n",
+                                       memcmp(midstate_hash,
+                                              header_hash,
+                                              32) == 0
+                                           ? "MATCH"
+                                           : "MISMATCH");
+
                                 memcpy(g_pending_header,
                                        header,
                                        sizeof(g_pending_header));
@@ -1478,6 +1639,21 @@ void app_main(void)
     uint32_t next_nonce = 0;
     printf("QHAP continuous mining controller starting...\n");
 
+    BaseType_t sw_task_result =
+        xTaskCreatePinnedToCore(
+            qhap_software_worker,
+            "qhap_sw_worker",
+            4096,
+            NULL,
+            1,
+            NULL,
+            1);
+
+    printf("Software Core 1 worker: %s\n",
+           sw_task_result == pdPASS
+               ? "STARTED"
+               : "FAILED");
+
     while (true) {
 
         int rx = qhap_receive_available(sock);
@@ -1517,6 +1693,19 @@ void app_main(void)
                        sizeof(active_header));
 
                 next_nonce = 0;
+
+                portENTER_CRITICAL(&g_sw_worker_mux);
+
+                memcpy(g_sw_worker_header,
+                       active_header,
+                       sizeof(g_sw_worker_header));
+
+                g_sw_worker_generation++;
+
+                if (g_sw_worker_generation == 0)
+                    g_sw_worker_generation = 1;
+
+                portEXIT_CRITICAL(&g_sw_worker_mux);
 
                 printf("\nActivated mining job: %s\n",
                        active_job_id);
