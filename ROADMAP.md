@@ -6,6 +6,12 @@ QHAP is a real Bitcoin solo-mining research project built around an ESP32-S3. Th
 
 QHAP must never claim simulated hashrate, fake share acceptance, or guaranteed Bitcoin earnings. Every performance or reliability claim should be tied to measured firmware behavior or an explicitly labeled estimate.
 
+## Project-wide strategic execution policy
+
+The user's standing **"chess mindset"** directive applies to the entire roadmap. Before each meaningful move, validate the current position, weigh alternatives and 2–3 downstream dependencies, protect productive hardware, define an independent measurable outcome, review failure modes and confirm a safe rollback. Do not prioritize setup demonstrations that do not enable a named reliability or performance milestone.
+
+**Mandatory review / safety doctrine:** [QHAP Strategic Engineering Playbook](docs/QHAP_STRATEGIC_PLAYBOOK.md). The strategic playbook and [PROJECT_MEMORY.md](PROJECT_MEMORY.md) are required context for future engineering sessions. Never promote mock/host-only evidence to hardware or production claims. Raspberry Pi storage reliability must be cleared before unattended experiment scheduling.
+
 ## Priority 1 — Block-safe reliability
 
 Before increasing hashrate, make the winning-result path as difficult to lose as possible.
