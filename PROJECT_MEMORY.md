@@ -1315,3 +1315,22 @@ REPL PASS
 **Validation:** Pico H MicroPython interpreter **physically executed an isolated command** and host-to-Pico USB serial communication is working. This does **not** validate Pico UART GP0 electrical output, emulator code execution on the Pico, synthetic CRC5 frames arriving at any ESP32, physical BM1370 control, or a Bitcoin hashrate improvement.
 
 **Safe next milestone:** Inspect availability of `mpremote` on the Pi without installing tooling blindly. Existing `tools/pico_bm1370_emulator.py` is MicroPython-compatible, not self-starting, and has 6 existing CPython-level tests; it must be transferred to the Pico and independently validated with generated CRC5 vector **without connecting GPIO**, then tested over 3.3 V UART with a positively identified *non-production* ESP32 only. Original miners remain untouched. Raspberry Pi offline EXT4 integrity gate is still unresolved before unattended experiments.
+
+
+---
+
+## 29. Pico H on-device BM1370 synthetic CRC5 vector — PASS
+
+**Hardware-observed** on the flashed Raspberry Pi Pico H / RP2040, MicroPython v1.29.0, accessed through its unique USB `/dev/serial/by-id/usb-MicroPython_Board_in_FS_mode_*` symlink using temporary RAM-only `mpremote 1.29.0` on the Raspberry Pi 5. The user ran the repository's existing `tools/pico_bm1370_emulator.py` extended with an ephemeral MicroPython on-device vector test through `mpremote ... run`; the test file was prepared under `/dev/shm` and was not saved to Pico flash. The emulator did not auto-start UART output.
+
+Observed output:
+
+```text
+Pico mock loaded but UART is NOT started automatically.
+On a Pico, import this module and call start_uart_test() explicitly.
+QHAP_PICO_CRC5_PASS aa55a1b2c3d4025a12348c
+```
+
+The on-device MicroPython code constructed a deterministic 11-byte BM1370-format synthetic result, matched the repository's independent golden vector, verified CRC5 residue zero, and verified that flipping a nonce bit without recomputing CRC5 produced a nonzero residue. **Valid:** Pico execution and mock packet/checksum generation. **Not validated:** physical Pico GP0 UART output, frame reception/CRC gating on a second ESP32, actual BM1370 ASIC communication, QHAP job dispatch to Bitaxe, Bitcoin proof-of-work acceleration. Do not equate this with more mining hashrate.
+
+**Next chess-mindset move:** positively identify and inventory a physically separate non-production ESP32-S3 board before any Pico→ESP32 UART wiring or test firmware. Preserve the known-good ESP32 reference miner on its own USB device and Bitaxe Gamma 601 running stock AxeOS. Before physical UART, validate 3.3 V logic, common GND, GPIO pinout, and the independent receiver's refusal to publish synthetic shares to CKPool. Pi's offline EXT4 structural check remains unresolved, so no unattended storage-writing campaigns.
