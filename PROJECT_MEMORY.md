@@ -1242,3 +1242,22 @@ Observed hardware and connectivity:
 Validation boundary: **simultaneous read-only telemetry is hardware-proven**; it is NOT ASIC control, an improved hashrate, an ESP32 wall-clock benchmark, a validated cross-device nonce allocator, a 24/7 service, or proof of accepted shares from the ESP32. The Bitaxe fan is at 100%; the ~79°C regulator and ~69°C ASIC readings merit thermal monitoring.
 
 Next: keep both production miners unchanged. Confirm Pico H USB identity independently on the Pi, then prepare its isolated BM1370-result stimulus path on a non-production ESP32. Finish offline SD-card filesystem integrity checks, storage/backup health gates, and the ESP32 wall-clock baseline before scheduling unattended Evolution Engine trials.
+
+
+---
+
+## 25. Standing strategic directive — QHAP chess mindset (2026-10-25)
+
+**User's explicit standing instruction:** "Be very careful and strategically with chess mindset in this project — rethink whatever we are doing is [appropriate]."
+
+The authoritative operating policy is [QHAP Strategic Engineering Playbook](docs/QHAP_STRATEGIC_PLAYBOOK.md). Apply this in every future QHAP session and to all engineering agents and tools.
+
+Mandatory interpretation: **think 2–3 moves ahead, compare alternatives, question whether a step advances the real objective, protect currently productive miners, detect hidden assumptions, require verifiable pass/fail gates, plan recovery before risk, and avoid premature hardware/firmware changes**. A command working or a new board becoming visible is not by itself strategic progress. Distinguish measurement/telemetry from new hashing capacity and real physical BM1370 control.
+
+Current hardware checkpoint from Raspberry Pi terminal, 2026-10-25:
+- `lsusb -d 2e8a:0003`: Raspberry Pi RP2 Boot, ID `2e8a:0003`.
+- Read-only `RPI-RP2` mount at `/run/qhap-pico`; `INFO_UF2.TXT`: `UF2 Bootloader v3.0`, `Model: Raspberry Pi RP2`, `Board-ID: RPI-RP2`.
+- This validates Pico H's RP2040-family BOOTSEL identity **only**. MicroPython has **not** been flashed and electrical Pico-to-ESP32 UART has **not** been demonstrated.
+- Reference miner at `/dev/ttyACM0` remains separate. USB device numbering may change; re-identify before interacting with any port.
+
+Immediate execution guardrail: no need to flash the Pico merely because BOOTSEL enumeration passed. First ensure official RP2040 Pico firmware provenance, installation/recovery steps, isolation of production miners, the exact experimental proof sought, and remaining Pi storage health risks. Continue only with one verified step at a time. The existing offline EXT4 integrity/backup gate remains unresolved for unattended operations.
