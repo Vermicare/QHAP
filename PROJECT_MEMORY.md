@@ -1280,3 +1280,17 @@ This is a **permanent QHAP objective and method**, complementary to Section 25's
 **Critical evidence boundary:** No new breakthrough in full-strength double-SHA256 mining has been demonstrated. A 10x/100x+ scientific advantage is an aspiration; purchasing more independent ASIC hashrate is a potentially practical path to order-of-magnitude *total* capability but not automatically a novel algorithm. A different PoW, toy quantum result or simulated hash cannot mine current Bitcoin unless it computes the exact consensus proof. Any claim of an advantage requires independent full-strength correctness and reproducible cost/power/effective throughput evidence. AI must not be claimed to predict winning nonces.
 
 **Current next move:** keep real miners running and both moonshot literature/cheap-simulation research and the isolated Pico/ESP32 protocol lane moving deliberately; finish outstanding Raspberry Pi offline EXT4 health validation before unattended experiments. This instruction and its linked files are required context when resuming QHAP from any future chat.
+
+
+---
+
+## 27. Pico H MicroPython boot and USB enumeration — hardware observed
+
+**2026-10-25 observation after preparing the official Pico/RP2040 UF2 firmware:**
+
+- Pico H initially in RP2040 BOOTSEL: `2e8a:0003`, `RPI-RP2` (`/dev/sda1`) bootloader drive; read-only inspected at `/run/qhap-pico`.
+- `/dev/shm/qhap_pico_micropython.uf2` recognized by the Pi `file` command as an RP2040-family UF2 containing 1330 blocks. Its SHA-256 was printed locally; no independent published-checksum confirmation established.
+- UF2 copied to the positively identified bootloader mount; subsequent `lsusb` displayed `2e8a:0005 MicroPython Board in FS mode` and `/dev/ttyACM1`, with a stable MicroPython `/dev/serial/by-id/usb-MicroPython_Board_in_FS_mode_*` symlink. BOOTSEL mass-storage device no longer appeared.
+- Reference production ESP32 remained `303a:1001 Espressif USB JTAG/serial debug unit` at `/dev/ttyACM0`. Do not rely on numerical tty names in future; select Pico via stable /dev/serial/by-id path.
+
+**Validation boundary:** UF2 application and MicroPython USB enumeration are **hardware-observed**, but MicroPython REPL identity/command-response, Pico GPIO UART operation, Pico↔challenger ESP32 wiring, and full BM1370 packet emulation are **not yet validated**. Next safe step: one harmless Pico-only REPL calculation, no writes to reference miner or Bitaxe. Pi's offline EXT4 filesystem-integrity gate remains open for unattended operations.
