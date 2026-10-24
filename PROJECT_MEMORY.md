@@ -1529,3 +1529,18 @@ The user ran `idf.py build` and reported **`QHAP RECEIVER BUILD PASS`**, with ge
 ## 47. Verified flash-size correction in receiver lab
 
 2026-10-25: User ran ESP-IDF menuconfig in the isolated Windows receiver project and verified `CONFIG_ESPTOOLPY_FLASHSIZE="8MB"` in sdkconfig. This corrects the earlier 2MB project default to match the separately identified experimental ESP32-S3's physical 8MB flash. Last reported partition selection was still single application, which differs from the original verified OTA layout (NVS at 0x9000, OTA data 0xE000, app0 at 0x10000, app1 at 0x150000, SPIFFS 0x290000, coredump 0x3F0000). Do not flash based on the default single-app table. Next: create and validate a custom CSV matching the backup's partition layout inside the *isolated* project, compare with the backed-up binary partition table, and only then change the lab configuration and rebuild. The previous 195888-byte binary was built before the flash-size correction, so it must be rebuilt. The original QHAP miner and stock Bitaxe remain unchanged.
+
+
+---
+
+## 48. Custom OTA partition scheme selected in receiver lab
+
+**2026-10-25.** In the isolated Windows ESP-IDF v6.1 receiver lab at `C:\esp_projects\qhap_bm1370_receiver_lab`, the user used menuconfig to select the **custom partition table CSV** and filename `partitions_qhap_original.csv`, preserving the default partition offset `0x8000` and MD5 table checksum. The user verified via sdkconfig output:
+
+```ini
+CONFIG_ESPTOOLPY_FLASHSIZE="8MB"
+CONFIG_PARTITION_TABLE_CUSTOM=y
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions_qhap_original.csv"
+```
+
+The custom CSV's decoded six logical entries had been compared separately to the original device's binary partition table, and the earlier PowerShell comparison reported `QHAP PARTITION LAYOUT MATCH PASS` (NVS, otadata, app0/ota_0, app1/ota_1, SPIFFS, coredump). **No rebuild using the now-correct config has yet been confirmed, and no firmware was flashed.** Next: `idf.py build` exclusively inside the isolated lab, decode its actually *generated* `build/partition_table/partition-table.bin` via ESP-IDF `gen_esp32part.py`, compare all six decoded entries against the original saved binary table, inspect app image and flash arguments. Be especially careful with OTA select state: the existing `otadata` can still select app1 even if app0 is flashed; do not assume writing at 0x10000 will boot. Preserve original production miners and private reconstructed 8MB image.
