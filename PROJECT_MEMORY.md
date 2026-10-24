@@ -1376,3 +1376,18 @@ A physically separate new ESP32-S3 board for the *isolated protocol-lab receiver
 **Interpretation:** Byte-for-byte matching application-sector data supports serial read repeatability at 115200 baud for the sampled static section. Does **not** establish reliability of a full 8 MiB read, validate all flash regions, prove NVS caused the earlier differing samples, or constitute a tested restore image. Keep prior failed full-read output and both probes as diagnostic evidence.
 
 **Next gate:** Read the full 8 MiB into a **new private backup file** on Windows at 115200 baud without overwriting previous evidence; only if esptool succeeds and the output is exactly 8,388,608 bytes, compute SHA-256. Then compare the saved image's static application slice against the verified 64 KiB sample; separately recognize live NVS may change across resets. No erasing/flashing/production connection changes until a trustworthy recovery path is available. Never commit or share the binary image; it can contain secrets.
+
+
+---
+
+## 33. Full 8 MiB experimental flash read reached 100% but failed digest — unverified
+
+**2026-10-25 — Windows esptool 5.4.0, separate experimental ESP32-S3 v0.2, CP210x COM7.** Following matching 64 KiB static application flash samples at 115200 baud (section 32), a full flash dump was attempted, with intended private local destination `C:\\esp_projects\\qhap_lab_backups\\esp32s3_full_8mb_115200_20261025.bin` and command:
+
+```powershell
+python -m esptool --chip esp32s3 --port COM7 --baud 115200 read-flash 0 0x800000 $backup
+```
+
+Reported progress `100.0% 8.00MB/8.00MB [12:38]`, after which esptool **failed** with `Digest mismatch: expected A6B4FE3EB233DFC10796D8ACADA3D85F, got B2C251BB856B5B31AA8041342D58AAF5`. The subsequent PowerShell status check printed `QHAP FULL BACKUP NOT VERIFIED`. The stub's read_flash protocol sends an MD5 at the end and the host verifies it. **Do not consider this a valid backup**, notwithstanding progress reaching 100%; no flash write or erase occurred. Prior 460800-baud full attempt failed at 18.1% with a short packet; 115200-baud static-region reads matched. NVS varying between separate reset/read sessions is plausible but **not proven to explain this in-transfer MD5 mismatch while the app was suspended in downloader mode**.
+
+**Immediate next non-destructive action:** Inspect existence, size, local MD5 and SHA-256 of the above candidate dump; compare bytes at offset `0x10000` and length `0x10000` with prior static application sample `esp32s3_app_read_A.bin`. Do not reattempt a 13-minute 8MB transfer, program the board, or assert a verified restore file until diagnostic results guide next step. Keep all binary backups offline/private since NVS may expose secrets; never commit binaries to GitHub. ESP32 production miner/Bitaxe firmware unchanged.
