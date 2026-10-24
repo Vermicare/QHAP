@@ -1220,3 +1220,25 @@ Examples:
 ---
 
 **QHAP principle:** preserve correctness first, protect the winner second, multiply real work third, and treat every claimed improvement as something to measure rather than assume.
+
+
+---
+
+## 24. Raspberry Pi 5 + Gamma 601 read-only telemetry — validated 2026-10-24
+
+The previous Gamma 602 purchase plan was superseded by the **physically received Bitaxe Gamma 601 / BM1370**, running its own stock AxeOS firmware. Do not conflate stock ASIC mining with QHAP hardware-controlled ASIC hashing; no direct QHAP-to-BM1370 UART work dispatch has occurred.
+
+Observed hardware and connectivity:
+
+- Raspberry Pi 5 (8GB) fitted with the purchased Raspberry Pi Active Cooler SC1148 and acrylic case. Fan spin test passed. Observed Pi CPU temperatures ~36.7°C at low load, ~39.7–40.25°C during telemetry; `vcgencmd get_throttled` reported `0x0` at the checked time.
+- Pi recovered and boots Raspberry Pi OS, mounted EXT4 root read/write, with QHAP repo at `/home/qhap/qhap`. Startup kernel logs showed no explicit current I/O error. **Prior extensive EXT4 structural inconsistencies have not been cleared by an offline fsck; do not treat boot success as filesystem validation or enable unattended/durable storage writes yet.**
+- Production QHAP ESP32-S3 still mines independently. Raspberry Pi reads its USB serial output via `/dev/ttyACM0` at 115200 baud without writing commands or reflashing it.
+- Pi connected to the PG Wi-Fi, able to access AxeOS `GET /api/system/info` over the LAN (HTTP 200) and Raspberry Pi Connect. Previous OnePlus-hotspot routing was isolated from the Bitaxe's LAN.
+- Existing `tools/qhap_lab.py` parsed a 12-second RAM-only serial sample: 31 observed inner-loop scan windows, **median 267.93 kH/s**, no malformed windows or observed SHA mismatches. No dedicated wall-clock benchmark or SHA reference match appeared in this short sample; these remain **not observed**, not validation failures.
+- New committed `tools/qhap_snapshot.py` and `tests/test_qhap_snapshot.py` were run on the real Pi as part of 19 passing host tests. Combined snapshot read live Bitaxe telemetry (~1.291 TH/s, ASIC 68.5°C, VR 78°C, 4300 accepted/0 rejected shares) and a **saved** ESP32 log (~267.93 kH/s median inner scan), with a Pi CPU reading ~39.15°C. The sources were explicitly labeled live vs historical.
+- New committed `tools/qhap_live_probe.py` and `tests/test_qhap_live_probe.py` were run on the Pi as part of **22/22 passing host tests**. A bounded 3-sample **real hardware** test collected Bitaxe HTTP telemetry, ESP32 USB serial and Pi CPU thermal data in the same session, and wrote credential-free JSONL only to `/dev/shm/qhap_live_probe.jsonl`.
+- Observed Bitaxe readings across three samples: ~1.294 / 1.299 / 1.337 TH/s; accepted shares 4440→4441; 0 rejected shares; ASIC ~68.75–68.875°C; VR ~79°C; fan 100%; power ~24.64 W. ESP32 serial had 0 completed scan windows immediately on probe start, then 13 and 25; median inner-scan rates ~268.08 and 268.28 kH/s. Pi CPU ~39.7–40.25°C. No SHA mismatch messages; `weighted_wall_khs` stayed null because no wall-clock benchmark blocks appeared.
+
+Validation boundary: **simultaneous read-only telemetry is hardware-proven**; it is NOT ASIC control, an improved hashrate, an ESP32 wall-clock benchmark, a validated cross-device nonce allocator, a 24/7 service, or proof of accepted shares from the ESP32. The Bitaxe fan is at 100%; the ~79°C regulator and ~69°C ASIC readings merit thermal monitoring.
+
+Next: keep both production miners unchanged. Confirm Pico H USB identity independently on the Pi, then prepare its isolated BM1370-result stimulus path on a non-production ESP32. Finish offline SD-card filesystem integrity checks, storage/backup health gates, and the ESP32 wall-clock baseline before scheduling unattended Evolution Engine trials.
