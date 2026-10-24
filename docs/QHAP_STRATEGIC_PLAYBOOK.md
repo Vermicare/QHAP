@@ -11,6 +11,20 @@ Interpret this as **plan several moves ahead, check assumptions before committin
 
 QHAP must be developed as a disciplined engineering program, not an improvised sequence of gadget tests. A successful individual command is not necessarily a useful strategic move.
 
+## Second standing instruction: chase the breakthrough
+
+> "We are going for the big win — not for small improvements — we must think in every scientific fields to improve our mining."
+
+**This is a project-wide mandate alongside the chess mindset, not a replacement for safety or scientific rigor.** Search systematically across mathematics, cryptography, physical computing, semiconductor and computer architecture, photonics, quantum information, thermodynamics, materials, power electronics, AI and distributed systems. Seek plausible 10x/100x+ leaps in **real Bitcoin-valid** hashing capability, efficiency or economically scalable capacity; recognize these magnitudes as goals, not promises or demonstrated outcomes.
+
+A minor tweak is worth doing only when it protects a possible winner, maintains a reliable baseline, resolves a safety gate or unlocks a higher-upside experiment. Do not let incremental tuning, peripheral hookup, dashboards or test-count inflation displace moonshot research.
+
+The authoritative research portfolio, screening criteria and evolving hypothesis list are:
+- [Breakthrough Research Program](../research/BREAKTHROUGH_RESEARCH_PROGRAM.md)
+- [Breakthrough Candidate Register](../research/BREAKTHROUGH_CANDIDATES.md)
+
+**Guardrail:** Every proposed discovery must still output the exact Bitcoin consensus SHA256d proof. A new PoW function, easy-target shares, simulation, a toy quantum circuit or “AI-predicted winning nonce” does not count. Use independent proofs and measurements, and protect all running production miners. A bold idea is not a validated result.
+
 ## Mission / what counts as progress
 
 Increase the probability that **real, consensus-valid Bitcoin hashing work** finds a winning block and that QHAP **does not lose a winner** due to job mapping, error handling, submission failure, stale work, crashes, resets, power failure or unsafe deployment.
