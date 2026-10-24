@@ -12,6 +12,18 @@ The user's standing **"chess mindset"** directive applies to the entire roadmap.
 
 **Mandatory review / safety doctrine:** [QHAP Strategic Engineering Playbook](docs/QHAP_STRATEGIC_PLAYBOOK.md). The strategic playbook and [PROJECT_MEMORY.md](PROJECT_MEMORY.md) are required context for future engineering sessions. Never promote mock/host-only evidence to hardware or production claims. Raspberry Pi storage reliability must be cleared before unattended experiment scheduling.
 
+## Parallel moonshot program — order-of-magnitude research
+
+**User's standing ambition:** pursue the **big win**, not a project dominated by marginal speedups; investigate ideas from **every potentially relevant scientific field**. Seek falsifiable 10x/100x+ research hypotheses in mathematics, cryptography, novel compute substrates, chip/VLSI architecture, quantum, optical computing, AI design-space search, energy/thermal/materials, and distributed ASIC systems. These are research targets, **not forecasts**.
+
+Run this discovery program **in parallel** with critical mining correctness, block-safe reliability, recovery and hardware safety work; don't replace mandatory safety gates with speculative experiments. Prefer low-cost falsification and open-source simulations; only fund or deploy hardware after scientifically credible evidence.
+
+- [Breakthrough Research Program](research/BREAKTHROUGH_RESEARCH_PROGRAM.md) — scientific opportunity map and selection framework.
+- [Breakthrough Candidate Register](research/BREAKTHROUGH_CANDIDATES.md) — ranked hypotheses, disproof tests and evidence states.
+- [Chess-Mindset Playbook](docs/QHAP_STRATEGIC_PLAYBOOK.md) — several-moves-ahead planning, isolation, validation and rollback.
+
+A real breakthrough increases valid unique SHA256d attempts, hashes/joule, affordable scalable hardware or the chance that a discovered valid block survives submission. No alternative proof of work, predictive nonce formula or simulation may be counted as a Bitcoin result without full consensus validity and independent evidence.
+
 ## Priority 1 — Block-safe reliability
 
 Before increasing hashrate, make the winning-result path as difficult to lose as possible.
