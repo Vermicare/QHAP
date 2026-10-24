@@ -1334,3 +1334,18 @@ QHAP_PICO_CRC5_PASS aa55a1b2c3d4025a12348c
 The on-device MicroPython code constructed a deterministic 11-byte BM1370-format synthetic result, matched the repository's independent golden vector, verified CRC5 residue zero, and verified that flipping a nonce bit without recomputing CRC5 produced a nonzero residue. **Valid:** Pico execution and mock packet/checksum generation. **Not validated:** physical Pico GP0 UART output, frame reception/CRC gating on a second ESP32, actual BM1370 ASIC communication, QHAP job dispatch to Bitaxe, Bitcoin proof-of-work acceleration. Do not equate this with more mining hashrate.
 
 **Next chess-mindset move:** positively identify and inventory a physically separate non-production ESP32-S3 board before any Pico→ESP32 UART wiring or test firmware. Preserve the known-good ESP32 reference miner on its own USB device and Bitaxe Gamma 601 running stock AxeOS. Before physical UART, validate 3.3 V logic, common GND, GPIO pinout, and the independent receiver's refusal to publish synthetic shares to CKPool. Pi's offline EXT4 structural check remains unresolved, so no unattended storage-writing campaigns.
+
+
+---
+
+## 30. Experimental ESP32-S3 identification on Windows (2026-10-25)
+
+A physically separate new ESP32-S3 board for the *isolated protocol-lab receiver* was connected to the Windows laptop via its CP210x USB-to-UART connector, not to the reference QHAP miner. Windows enumerated `Silicon Labs CP210x USB to UART Bridge (COM7)` (`USB VID_10C4/PID_EA60`); its COM7 presence was observed only when connected. With ESP-IDF v6.1 activated, `python -m esptool version` reported **esptool 5.4.0**, and the read-only `python -m esptool --port COM7 --baud 115200 flash-id` completed successfully:
+
+- ESP32-S3 QFN56, chip revision **v0.2**, dual core up to 240 MHz, 40 MHz crystal.
+- Flash memory **8 MB**, quad data lines, 3.3 V eFuse flash voltage; embedded **8 MB PSRAM** reported by esptool.
+- The new board's hardware MAC **ends in :58**; the separately attached ESP32 on the Pi previously appeared under USB identity ending `...:34`. This differentiates the observed devices, but full physical board-role mapping still requires confirmation. Avoid publishing complete hardware MACs unnecessarily.
+- After the diagnostic the board reset via RTS. **No flash write/erase, firmware transfer or GPIO wiring was performed.** USB data on the Windows laptop was verified; the same new board had not enumerated on the Raspberry Pi black or blue USB ports during previous tests. Reconnecting to Pi may appear as `/dev/ttyUSB*` through CP210x, not necessarily `/dev/ttyACM*`; the Pi-side USB issue is unresolved.
+- Windows `C:\\esp_projects\\qhap` previously showed local branch `feature/bm1370-crc5-validation-20261011` with untracked `build_board_b/` and two timestamped `.bak` files. **Preserve these files and the production branch.** Pi/GitHub protocol-monitoring work is on `feature/bm1370-integration`. Do not change production/miner code or delete untracked files as an incidental step.
+
+**Next chess-mindset gate:** Preserve any factory/example firmware (optional preflash backup) and create a separate experimental build/worktree on Windows. Only flash this positively identified new board after reviewing its experimental image and verifying target, flash/PSRAM configuration, no real-pool synthetic submissions, and rollback. Keep original mining ESP32 and stock Bitaxe running. After isolated USB receiver validation, test Pico→receiver on verified 3.3 V UART, then independently revisit Pi USB enumeration. The Pi's previous EXT4 structural-integrity concerns still block unattended disk writes/experiment services.
