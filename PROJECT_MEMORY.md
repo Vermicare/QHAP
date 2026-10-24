@@ -1391,3 +1391,16 @@ python -m esptool --chip esp32s3 --port COM7 --baud 115200 read-flash 0 0x800000
 Reported progress `100.0% 8.00MB/8.00MB [12:38]`, after which esptool **failed** with `Digest mismatch: expected A6B4FE3EB233DFC10796D8ACADA3D85F, got B2C251BB856B5B31AA8041342D58AAF5`. The subsequent PowerShell status check printed `QHAP FULL BACKUP NOT VERIFIED`. The stub's read_flash protocol sends an MD5 at the end and the host verifies it. **Do not consider this a valid backup**, notwithstanding progress reaching 100%; no flash write or erase occurred. Prior 460800-baud full attempt failed at 18.1% with a short packet; 115200-baud static-region reads matched. NVS varying between separate reset/read sessions is plausible but **not proven to explain this in-transfer MD5 mismatch while the app was suspended in downloader mode**.
 
 **Immediate next non-destructive action:** Inspect existence, size, local MD5 and SHA-256 of the above candidate dump; compare bytes at offset `0x10000` and length `0x10000` with prior static application sample `esp32s3_app_read_A.bin`. Do not reattempt a 13-minute 8MB transfer, program the board, or assert a verified restore file until diagnostic results guide next step. Keep all binary backups offline/private since NVS may expose secrets; never commit binaries to GitHub. ESP32 production miner/Bitaxe firmware unchanged.
+
+
+---
+
+## 34. Experimental ESP32 256 KiB application-partition transfer — verified PASS
+
+**2026-10-25, Windows PowerShell, ESP32-S3 v0.2, COM7, esptool v5.4.0, baud 115200.** The user ran `python -m esptool --chip esp32s3 --port COM7 --baud 115200 read-flash 0x10000 0x40000 C:\\esp_projects\\qhap_lab_backups\\esp32s3_app_256kb_test.bin`. After successful command and expected-size checks, PowerShell printed **`QHAP 256KB VERIFIED READ PASS`** and the captured 262,144-byte file's SHA-256:
+
+`D491E78A06A8CFABB1613B2A1623917E68B0A52B706D7C5DCF5617063367832A`.
+
+This verifies a 256 KiB **application** region read at this baud rate and adds confidence in *shorter* integrity-checked captures. Previous complete 8 MiB read at 115200 baud failed esptool's final MD5 despite transferring 100%, and no complete file was retained. A successful 256 KiB chunk does **not** validate the rest of flash or solve long-transfer integrity failures. All reads are non-destructive.
+
+**Next gate:** Capture the 256 KiB segment at flash offset `0x0` to a separate private `esp32s3_chunk_00_000000.bin`, then verify successful esptool exit, exact 262,144-byte output, and agreement between the saved segment's static app slice `0x10000..0x3FFFF` (192 KiB) and the previously verified app test sample `esp32s3_app_256kb_test.bin` (sample offsets `0x0..0x2FFFF`). This tests the NVS-containing first chunk and overlap before automating the remaining 31 contiguous 256 KiB segments. Name every segment with hex flash offset, independently verify digests/length, abort on a failed segment, never assume all slices reflect one atomic flash snapshot across app restarts, and compare overlapping app content before assembling. Keep binary images private, out of GitHub, and production miners isolated.
