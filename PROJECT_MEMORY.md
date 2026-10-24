@@ -1472,3 +1472,24 @@ The SHA-256 was `3B874D3BA46C638FC3094F8E92FB744CA974893873F8885F54E23760F9B6311
 **2026-10-25, Windows PC, separate experimental ESP32-S3 (COM7) read-only backup.** The resumed ROM `--no-stub` dual-read chunk capture from chunk 14 through chunk 31 completed. The user shared the final PowerShell output: **`CHUNK 31 VERIFIED PASS`**, **`QHAP ALL 32 CHUNKS VERIFIED PASS`**, and `NEXT: RECONSTRUCT COMPLETE 8MB IMAGE`. The final script audited 32 individually captured 256 KiB (`0x40000`) binary files, using exact lengths and SHA-256 verification against local sidecars (with pinned known-good hashes for chunks 00/07/13), for a total of **8,388,608 bytes (8 MiB)** across flash offsets `0x000000–0x7FFFFF`. Chunk 07 and chunk 13 previously passed repeatable ROM capture tests; their identical SHA-256 `3B874D3BA46C638FC3094F8E92FB744CA974893873F8885F54E23760F9B6311B` corresponds to all-`0xFF` data. This completion message reflects actual loop progress + final checks, unlike a prior manually printed success banner. The individual verified files are saved privately in `C:\\esp_projects\\qhap_lab_backups`, with predictable names `esp32s3_chunk_XX_OFFSET.bin`; **do not upload binary backups to GitHub** since they can expose credentials.
 
 **Next safety gate:** Assemble the 32 files *in numerical flash offset order* into a newly named full image without overwriting existing files; pre-validate every source length and hash again, write 8,388,608 bytes exactly, compare every reconstructed 256 KiB slice to the source chunk, validate the known application overlap (0x10000) against `esp32s3_app_256kb_test.bin`, compute and separately save a SHA-256 manifest, and confirm the partition table at 0x8000 matches the earlier inspected ESP-IDF layout. Preserve all 32 source chunks and any prior incomplete attempts. The backup is reconstructed from non-atomic reads across several ESP32 resets, so it is **not yet a proven restorable device image**. Do not write firmware or change production miner/Bitaxe until image assembly + safety plan are reviewed.
+
+
+---
+
+## 43. Complete 8 MiB experimental ESP32 flash image reconstructed and verified
+
+**2026-10-25, Windows PC, *separate experimental* ESP32-S3 (QFN56 rev 0.2, embedded 8 MB PSRAM and 8 MB flash, UART CP210x COM7).** After separately verified `0x40000` (256 KiB) ROM/stub flash read chunks 00–31 were captured and backed up under `C:\\esp_projects\\qhap_lab_backups`, the user reconstructed them in ascending address order into a private full image at `C:\\esp_projects\\qhap_lab_backups\\esp32s3_full_8mb_reconstructed.bin`. PowerShell assembly and independent comparison reported ALL FOUR results:
+
+```text
+ALL 32 RECONSTRUCTED SECTIONS PASS
+APPLICATION REFERENCE PASS
+PARTITION TABLE REFERENCE PASS
+QHAP FULL 8MB IMAGE VERIFIED PASS
+SHA256: 4DC4BC1F7E359BD15BAE169E15EC23F1E8953CD002532862C4D0813BD2D9E2C3
+```
+
+Final length verified as **8,388,608 bytes**. Every reassembled 256 KiB segment was verified against the saved source chunk SHA-256. The flash application's 256 KiB at offset `0x10000` matched the independently captured `esp32s3_app_256kb_test.bin`; partition-table bytes `0x8000..0x8fff` matched `partition_table_from_probe.bin`. A complete-image SHA-256 was saved locally in `esp32s3_full_8mb_reconstructed.bin.sha256`. Chunks 07 and 13, SHA-256 `3B874D3BA46C638FC3094F8E92FB744CA974893873F8885F54E23760F9B6311B`, are consistent with all-`0xFF` erased flash.
+
+**Recovery scope/caveats:** This is an integrity-validated reconstructed image, **not a restore-tested recovery image**. Source reads occurred across multiple resets and moments; mutable NVS, OTA data, SPIFFS or coredump contents might differ across collection time and may not represent an atomic snapshot. It contains private flash and may include Wi-Fi secrets; retain offline, do not commit/upload binary image or local flash contents to GitHub. The **text-only digest and milestone** may be documented in GitHub. A second copy of the image on another physical drive (protected access) is preferable before experimental firmware changes. Preserve all chunk originals and sidecars until recovery is proven. The *production ESP32 mining firmware and Bitaxe stock AxeOS* have not been touched.
+
+**Next chess-mindset gate:** establish a separate Windows ESP-IDF v6.1 `C:\\esp_projects\\qhap_bm1370_receiver_lab` workspace (no resets, cleans, rewrites of `C:\\esp_projects\\qhap`), create an isolated BM1370 synthetic UART-frame receiver application only for this experimental board, inspect its flash/partition settings, build and review before considering a flash. Subsequently connect Raspberry Pi Pico H 3.3V UART TX and GND to ESP32 verified receiving GPIO+GND; neither board sends fake pool shares nor programs a real Bitaxe ASIC. Implement reproducible tests before hardware integration. No claim of BTC breakthrough yet.
