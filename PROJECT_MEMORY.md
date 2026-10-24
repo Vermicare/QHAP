@@ -1445,3 +1445,14 @@ The summary **does not reveal the underlying esptool error** (USB disconnect, RO
 ## 39. Chunks 08–12 independently rechecked after chunk-13 interruption
 
 **2026-10-25, Windows experimental ESP32-S3 (COM7), read-only flash backups.** Following the stopped ROM loader operation at chunk 13, the user ran a separate local file-length and SHA-256/sidecar verification for each of chunks 08, 09, 10, 11, and 12. All five printed **`CHUNK N PASS`**. `Get-ChildItem` for failed `chunk_13_read*.bin` attempts returned no files. Combined with prior verified chunks 00–07, **13/32 chunks (3.25 MiB) are captured and locally verified**, subject to final assembly and consistency validation. Chunk 13 begins at flash offset `0x340000`, within SPIFFS, and did not complete its first ROM-mode 256 KiB read. The actual underlying esptool error text has not been supplied; do not attribute it to a particular cause yet. Next diagnostic: attempt **only** a new, uniquely named ROM `--no-stub` read of offset 0x340000, length 0x40000 at 115200 baud, preserving all existing chunks, and capture esptool's complete error if it fails. No flash erase/write or production miner modifications.
+
+
+---
+
+## 40. Chunk 13 initial ROM capture succeeded; FF-only hash discovery
+
+**2026-10-25 (local filename timestamp 20261024), experimental ESP32-S3 COM7 flash-backup work.** Following the stop at chunk index 13, chunks 08–12 were independently checked for correct 256 KiB length and their SHA-256 sidecars, all reporting PASS. The first retry of chunk 13 using `esptool --chip esp32s3 --port COM7 --baud 115200 --no-stub read-flash 0x340000 0x40000` succeeded: `Read 262144 bytes from 0x00340000 in 58.2 seconds (36.1 kbit/s)`, file `C:\\esp_projects\\qhap_lab_backups\\chunk13_rom_A_20261024_215954_361.bin`; printed `QHAP CHUNK 13 FIRST READ PASS`.
+
+The SHA-256 was `3B874D3BA46C638FC3094F8E92FB744CA974893873F8885F54E23760F9B6311B`, **identical to the previously verified Chunk 07 hash**, and independently identified as the exact SHA-256 of **262,144 0xFF bytes** (erased/blank flash). This strongly suggests both the original chunk 07 and this first chunk 13 capture are erased blank flash, though it does not prove the source of esptool stub digest failures or establish the completeness of the 8 MiB backup.
+
+**Next validation gate:** One *second*, separately captured ROM-mode read of chunk 13 (0x340000, 0x40000) with no-overwrite semantics; require normal process exit, exact 262144-byte size, matching digest to first copy and the known 0xFF digest; only then promote to `esp32s3_chunk_13_340000.bin` with `.sha256` sidecar. Keep existing chunks untouched and flash data private. Chunks 14–31 remain unverified; do not program ESP32 until complete reconstructed image has been audited.
