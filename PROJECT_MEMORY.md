@@ -1365,3 +1365,14 @@ A physically separate new ESP32-S3 board for the *isolated protocol-lab receiver
 **Interpretation:** Both changed sectors are entirely within NVS, consistent with firmware-updated persistent configuration across resets; this is not yet a proven cause and does not demonstrate flash failure. A passing smaller 115200-baud read does not prove an 8MB transfer is reliable. **Do not erase/flash experimental firmware or declare a valid complete backup yet.**
 
 **Next low-risk diagnostic:** compare two 64 KiB reads from static application partition address `0x10000` using 115200 baud and SHA-256. If identical, attempt a full original-flash backup at low baud while keeping a separate hash, labeling NVS as time-varying rather than requiring two whole-image digests to be identical across resets. Protect full flash images as potentially containing Wi-Fi/pool credentials. Preserve the working ESP32 miner and stock Bitaxe completely.
+
+
+---
+
+## 32. Experimental ESP32 stable application flash-region reread — PASS
+
+**2026-10-25, Windows laptop, experimental ESP32-S3 on CP210x COM7.** Following the first 64 KiB flash read mismatch restricted to NVS sectors 0xB000 and 0xD000 (documented in section 31), the user read **two separate 64 KiB samples of the application's static flash region beginning at 0x10000**, both via `esptool v5.4.0 --chip esp32s3 --port COM7 --baud 115200 read-flash 0x10000 0x10000`. Files `esp32s3_app_read_A.bin` and `esp32s3_app_read_B.bin` were checked for full 65,536-byte length and equal SHA-256 digests in PowerShell. Observed terminal result: **`QHAP STATIC FLASH READ PASS`**.
+
+**Interpretation:** Byte-for-byte matching application-sector data supports serial read repeatability at 115200 baud for the sampled static section. Does **not** establish reliability of a full 8 MiB read, validate all flash regions, prove NVS caused the earlier differing samples, or constitute a tested restore image. Keep prior failed full-read output and both probes as diagnostic evidence.
+
+**Next gate:** Read the full 8 MiB into a **new private backup file** on Windows at 115200 baud without overwriting previous evidence; only if esptool succeeds and the output is exactly 8,388,608 bytes, compute SHA-256. Then compare the saved image's static application slice against the verified 64 KiB sample; separately recognize live NVS may change across resets. No erasing/flashing/production connection changes until a trustworthy recovery path is available. Never commit or share the binary image; it can contain secrets.
