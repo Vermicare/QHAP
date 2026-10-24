@@ -1349,3 +1349,19 @@ A physically separate new ESP32-S3 board for the *isolated protocol-lab receiver
 - Windows `C:\\esp_projects\\qhap` previously showed local branch `feature/bm1370-crc5-validation-20261011` with untracked `build_board_b/` and two timestamped `.bak` files. **Preserve these files and the production branch.** Pi/GitHub protocol-monitoring work is on `feature/bm1370-integration`. Do not change production/miner code or delete untracked files as an incidental step.
 
 **Next chess-mindset gate:** Preserve any factory/example firmware (optional preflash backup) and create a separate experimental build/worktree on Windows. Only flash this positively identified new board after reviewing its experimental image and verifying target, flash/PSRAM configuration, no real-pool synthetic submissions, and rollback. Keep original mining ESP32 and stock Bitaxe running. After isolated USB receiver validation, test Pico→receiver on verified 3.3 V UART, then independently revisit Pi USB enumeration. The Pi's previous EXT4 structural-integrity concerns still block unattended disk writes/experiment services.
+
+
+---
+
+## 31. Experimental ESP32 flash backup diagnostic — NVS variation identified
+
+**2026-10-25, Windows esptool v5.4.0, separate ESP32-S3 QFN56 rev v0.2 at COM7 / CP210x.** An attempt to read the full 8 MB flash at 460800 baud failed at ~18.1% with `Corrupt data, expected 0x1000 bytes but received 0xfff bytes`. The output is incomplete and not a usable recovery image. Two subsequent reads of offset `0x0`, size `0x10000` (64 KiB) at 115200 baud completed and produced different SHA-256 hashes despite equal sizes:
+
+- First `esp32s3_probe_64kb.bin`: `B90E0CC887C60B961FD49406F20EDEE1304A1562CE18EDFB630C7CC91B7D2C90`.
+- Second `esp32s3_probe_repeat.bin`: `8F6BB8691A691A702931000A57D8B93296788973D7C9658CF7C53E209E3F2689`.
+- Bytewise comparison: `0x0B000` sector 1 different byte; `0x0D000` sector 1018 different bytes; other 14 4KiB sectors in this sample identical (1019 total byte differences).
+- The binary partition table extracted from the original backup slice `0x8000–0x8FFF` was successfully decoded by the installed ESP-IDF `gen_esp32part.py`: `nvs` data partition `0x9000` size 20 KiB (covers `0x9000–0xDFFF`), `otadata` `0xE000` size 8 KiB, `app0` `0x10000` size 1280 KiB, `app1` `0x150000` size 1280 KiB, `spiffs` `0x290000` size 1408 KiB, and `coredump` `0x3F0000` size 64 KiB.
+
+**Interpretation:** Both changed sectors are entirely within NVS, consistent with firmware-updated persistent configuration across resets; this is not yet a proven cause and does not demonstrate flash failure. A passing smaller 115200-baud read does not prove an 8MB transfer is reliable. **Do not erase/flash experimental firmware or declare a valid complete backup yet.**
+
+**Next low-risk diagnostic:** compare two 64 KiB reads from static application partition address `0x10000` using 115200 baud and SHA-256. If identical, attempt a full original-flash backup at low baud while keeping a separate hash, labeling NVS as time-varying rather than requiring two whole-image digests to be identical across resets. Protect full flash images as potentially containing Wi-Fi/pool credentials. Preserve the working ESP32 miner and stock Bitaxe completely.
