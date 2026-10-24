@@ -1261,3 +1261,22 @@ Current hardware checkpoint from Raspberry Pi terminal, 2026-10-25:
 - Reference miner at `/dev/ttyACM0` remains separate. USB device numbering may change; re-identify before interacting with any port.
 
 Immediate execution guardrail: no need to flash the Pico merely because BOOTSEL enumeration passed. First ensure official RP2040 Pico firmware provenance, installation/recovery steps, isolation of production miners, the exact experimental proof sought, and remaining Pi storage health risks. Continue only with one verified step at a time. The existing offline EXT4 integrity/backup gate remains unresolved for unattended operations.
+
+
+---
+
+## 26. Second standing directive — breakthrough-first cross-disciplinary mining R&D (2026-10-25)
+
+**User's instruction:** "Also we are going for the big win — not for small improvements — we must think in every scientific fields to improve our mining."
+
+This is a **permanent QHAP objective and method**, complementary to Section 25's chess-mindset rule. QHAP must search broadly for **orders-of-magnitude scientific/system breakthroughs**, including unexpected cross-disciplinary combinations, instead of making 2–5% ESP32/peripheral tweaks the primary end goal. Preserve disciplined experiments, correctness and recovery protections, and the independence of the working ESP32-S3 and stock Bitaxe Gamma 601. Small reliability/performance work is justified when necessary to protect a winner, prove a baseline or enable a major high-upside study.
+
+**Authoritative documentation:**
+- [Breakthrough Research Program](research/BREAKTHROUGH_RESEARCH_PROGRAM.md) — scientific map, mechanism/consensus/falsification gates, portfolio strategy and genuine improvement metrics.
+- [Breakthrough Candidate Register](research/BREAKTHROUGH_CANDIDATES.md) — initial ten testable candidates, including ASIC scaling, novel SHA datapaths, chip design, cryptanalysis, photonics, reversible/quantum computing, AI design-space search and materials/electrical/thermal systems.
+- [Strategic Engineering Playbook](docs/QHAP_STRATEGIC_PLAYBOOK.md) — now includes this standing moonshot directive and requirement to think several moves ahead.
+- [Roadmap](ROADMAP.md) — includes a parallel cross-disciplinary 10x+ moonshot program, without removing safety/Bitcoin-validity priorities.
+
+**Critical evidence boundary:** No new breakthrough in full-strength double-SHA256 mining has been demonstrated. A 10x/100x+ scientific advantage is an aspiration; purchasing more independent ASIC hashrate is a potentially practical path to order-of-magnitude *total* capability but not automatically a novel algorithm. A different PoW, toy quantum result or simulated hash cannot mine current Bitcoin unless it computes the exact consensus proof. Any claim of an advantage requires independent full-strength correctness and reproducible cost/power/effective throughput evidence. AI must not be claimed to predict winning nonces.
+
+**Current next move:** keep real miners running and both moonshot literature/cheap-simulation research and the isolated Pico/ESP32 protocol lane moving deliberately; finish outstanding Raspberry Pi offline EXT4 health validation before unattended experiments. This instruction and its linked files are required context when resuming QHAP from any future chat.
