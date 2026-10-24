@@ -1294,3 +1294,24 @@ This is a **permanent QHAP objective and method**, complementary to Section 25's
 - Reference production ESP32 remained `303a:1001 Espressif USB JTAG/serial debug unit` at `/dev/ttyACM0`. Do not rely on numerical tty names in future; select Pico via stable /dev/serial/by-id path.
 
 **Validation boundary:** UF2 application and MicroPython USB enumeration are **hardware-observed**, but MicroPython REPL identity/command-response, Pico GPIO UART operation, Pico↔challenger ESP32 wiring, and full BM1370 packet emulation are **not yet validated**. Next safe step: one harmless Pico-only REPL calculation, no writes to reference miner or Bitaxe. Pi's offline EXT4 filesystem-integrity gate remains open for unattended operations.
+
+
+---
+
+## 28. Pico H MicroPython REPL — observed PASS
+
+At the Raspberry Pi 5 remote shell, the newly flashed Pico H's unique MicroPython `/dev/serial/by-id/usb-MicroPython_Board_in_FS_mode_*` serial symlink resolved to `/dev/ttyACM1` (reference mining ESP32 remained on `/dev/ttyACM0`). A bounded, no-file-write Python host script opened the identified Pico serial port, entered raw host terminal mode, sent the harmless REPL expression `print(6 * 7, "QHAP_PICO_OK")`, and captured its response.
+
+**Pico's observed response:**
+
+```text
+MicroPython v1.29.0 on 2026-08-24; Raspberry Pi Pico with RP2040
+>>> print(6 * 7, "QHAP_PICO_OK")
+42 QHAP_PICO_OK
+>>> 
+REPL PASS
+```
+
+**Validation:** Pico H MicroPython interpreter **physically executed an isolated command** and host-to-Pico USB serial communication is working. This does **not** validate Pico UART GP0 electrical output, emulator code execution on the Pico, synthetic CRC5 frames arriving at any ESP32, physical BM1370 control, or a Bitcoin hashrate improvement.
+
+**Safe next milestone:** Inspect availability of `mpremote` on the Pi without installing tooling blindly. Existing `tools/pico_bm1370_emulator.py` is MicroPython-compatible, not self-starting, and has 6 existing CPython-level tests; it must be transferred to the Pico and independently validated with generated CRC5 vector **without connecting GPIO**, then tested over 3.3 V UART with a positively identified *non-production* ESP32 only. Original miners remain untouched. Raspberry Pi offline EXT4 integrity gate is still unresolved before unattended experiments.
