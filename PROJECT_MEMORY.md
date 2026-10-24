@@ -1544,3 +1544,12 @@ CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions_qhap_original.csv"
 ```
 
 The custom CSV's decoded six logical entries had been compared separately to the original device's binary partition table, and the earlier PowerShell comparison reported `QHAP PARTITION LAYOUT MATCH PASS` (NVS, otadata, app0/ota_0, app1/ota_1, SPIFFS, coredump). **No rebuild using the now-correct config has yet been confirmed, and no firmware was flashed.** Next: `idf.py build` exclusively inside the isolated lab, decode its actually *generated* `build/partition_table/partition-table.bin` via ESP-IDF `gen_esp32part.py`, compare all six decoded entries against the original saved binary table, inspect app image and flash arguments. Be especially careful with OTA select state: the existing `otadata` can still select app1 even if app0 is flashed; do not assume writing at 0x10000 will boot. Preserve original production miners and private reconstructed 8MB image.
+
+
+---
+
+## 49. Corrected receiver build partition binary matches original six entries
+
+On 2026-10-25, the user reported `QHAP GENERATED PARTITION TABLE PASS` from a script that first ran `idf.py build` for `C:\\esp_projects\\qhap_bm1370_receiver_lab` with target ESP32-S3, flash size 8MB, and `CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions_qhap_original.csv"`. The script then decoded `build/partition_table/partition-table.bin` and the original partition-table backup, requiring exactly six identical partition rows (NVS, OTA data, app0, app1, SPIFFS, coredump). **The generated table matches the recovered original layout; this is build-time validation, not a flashing or runtime test.** No flash has taken place.
+
+**Next critical preflash gate:** Inspect saved original full-flash backup's OTA metadata at `0xE000` and `0xF000`, plus first byte of OTA app slot images at `0x10000` and `0x150000`, to learn whether the original device had a programmed boot selection or an erased OTA data partition. OTA bootloader consultation of `otadata` can cause a plain app-slot-0 flash to *not* boot. Check also the local build flasher args, and avoid `idf.py flash` (which writes the bootloader and partition-table as well). The reconstructed backup is temporally non-atomic, so saved OTA data need not reflect the current live state. Require a second protected independent copy of the private 8MB backup and positive COM7 board identity before future writing. Source firmware is receiver-only; original miners unchanged.
