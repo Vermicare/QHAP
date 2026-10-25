@@ -1658,3 +1658,8 @@ On 2026-10-25, the separate experimental ESP32-S3 (COM7, rev v0.2) was read usin
 ### Live App1 fourth-region erased check (2026-10-25)
 
 Read-only COM7 inspection of the experimental ESP32-S3: the 256 KiB region starting at 0x1E0000 was confirmed entirely 0xFF, matching the historical offline backup. Combined live inspected App1 space is 832 KiB of 1280 KiB (65%). The remaining 448 KiB starts at 0x220000. Original App0 and OTA selection remain unchanged. No firmware was written.
+
+
+### Live App1 fifth region (2026-10-25)
+
+Read-only esptool v5.4.0 COM7 experimental ESP32-S3 read of 0x220000 for 0x40000 bytes succeeded. Offline Python verified exact 262144-byte length and all data 0xFF: `QHAP LIVE APP1 FIFTH REGION ERASED PASS`. Verified live App1 total: 1088 KiB out of 1280 KiB (85%). Final still-unverified region: 0x260000–0x28FFFF (0x30000, 192 KiB). No firmware flashed, OTA switch or Bitaxe modifications.
