@@ -1763,3 +1763,8 @@ The corrected isolated receiver booted as App1, printed `BM1370 CRC5 SELF-TEST P
 ### Reset explanation clarified: manual EN presses
 
 User explicitly confirmed both POWERON restarts seen after the receiver OTA validation were caused by manually pressing ESP32-S3 RESET/EN, not spontaneous resets. Therefore there is no evidence of unexpected receiver restart from those logs. The receiver first boot confirmed OTA image VALID; subsequent manual resets retained OTA state 2 (VALID). UART receiver continued READY heartbeats through at least 150 seconds with no frames (no Pico data connection yet). Next laboratory milestone is safe two-wire Pico H UART0 TX GP0 to ESP32 GPIO17 RX, and Pico GND to ESP32 GND; two devices remain separately USB powered. Do not connect 3V3 or 5V rails and avoid changing production Bitaxe. Validate pin orientation first, power down before wiring. Root cause warning about 8 MB chip and 4 MB boot-time image header is not a proved fault.
+
+
+### Checkpoint 2026-10-25: safe shutdown and next Pico UART session
+
+**Current authoritative end-of-session checkpoint:** [BM1370 receiver session checkpoint](docs/BM1370_RECEIVER_SESSION_CHECKPOINT_2026-10-25.md). Records the validated App1 OTA state, first rollback and fix, flash and recovery evidence, firmware hashes, private local backup paths, manual-RESET clarification, Raspberry Pi/Pico/ESP32 physical separation, safe power-down instructions, outstanding flash-size warning, and the exact next Pico H TX-to-ESP32 RX simulation steps. **No UART wire or Pico frame testing is complete. No OTA/flash changes are needed tomorrow.**
