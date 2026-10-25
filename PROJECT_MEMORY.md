@@ -1728,3 +1728,8 @@ The user provided five screenshots from Windows ESP-IDF monitor on the isolated 
 ### Receiver source review: missing OTA acknowledgement
 
 The isolated receiver boots, passes its CRC5 self-test, and configures UART1 on GPIO17. After its first boot, App1 OTA metadata was observed as ABORTED while original App0 remained available. The local C source has no OTA image-validation call and main/CMakeLists.txt lists only the esp_driver_uart dependency. Planned minimal fix: add app_update dependency and, after successful self-test and UART setup, inspect running OTA state and call esp_ota_mark_app_valid_cancel_rollback only when PENDING_VERIFY. Also inspect/enable the rollback configuration in the lab app build, independent of the original preserved bootloader. No new flash write before rebuilt image and recovery checks.
+
+
+### Lab source patched; rollback Kconfig still disabled (2026-10-25)
+
+User ran a guarded local patch of the isolated ESP32-S3 receiver C file and its component CMakeLists.txt. Confirmed results: original source backups created, guarded OTA image-confirmation code added after the existing CRC5 self-test and UART startup, and `app_update` added to component dependencies. No compilation or flashing yet. Local `sdkconfig` inspection showed `CONFIG_BOOTLOADER_APP_ROLLBACK_ENABLE` not enabled. Next step: open `idf.py menuconfig` and enable Bootloader config > Application Rollback > Enable app rollback support, then validate `sdkconfig` and rebuild. Only app1 application image should be written later; original bootloader remains untouched.
