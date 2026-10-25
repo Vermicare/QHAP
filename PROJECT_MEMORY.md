@@ -1632,3 +1632,10 @@ Remaining prewrite gate: separately assess app1-only image write, secure existin
 ## 58. Live COM7 OTA metadata matches saved App0 selection
 
 **2026-10-25:** The user performed an 8,192-byte read-only flash dump from experimental ESP32-S3 COM7 at address 0xE000 using esptool v5.4.0, --no-stub and 115200 baud. The ROM identified ESP32-S3 revision v0.2, MAC suffix 0a:58. Live OTA entry at **0xE000** has sequence **1**, state **0xffffffff**, and CRC **0x4743989a**; second at **0xF000** has sequence **0**, state **0xffffffff**, CRC **0xffffffff**. These fields match the previously validated private reconstructed backup and indicate App0 remains selected by normal two-slot ESP-IDF sequence mapping. Full live OTA file is stored locally in the private QHAP backup directory. No flash changes made. Next: verify the CRC using a script and compare all 8192 live OTA bytes to the reference image; then check candidate App1 state live as needed before considering application-only programming. User chose to keep recovery images private on laptop C and D volumes (same physical NVMe; correlated-loss risk explicitly noted).
+
+
+---
+
+## 59. Live App1 first 64 KiB erased
+
+On 2026-10-25, the separate experimental ESP32-S3 (COM7, rev v0.2) was read using esptool v5.4.0 in ROM no-stub mode: address 0x150000, length 0x10000 (65,536 bytes). The saved readback was checked by Python for exact length and every byte equal to 0xFF. Output: `QHAP LIVE APP1 FIRST 64KB ERASED PASS`. Previous read-only live OTA sector comparison also matched the historical 8 KiB image; boot selection remains App0. This is a read-only milestone: it proves only App1's first 64 KiB is blank. The rest of the 1280 KiB App1 partition still needs live verification. No flashing, OTA changes, or changes to the independent Bitaxe were performed.
