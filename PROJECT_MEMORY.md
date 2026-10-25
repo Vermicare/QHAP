@@ -1748,3 +1748,8 @@ Isolated ESP32-S3 BM1370 receiver application with guarded app-valid acknowledge
 ### Receiver App1 update verified by esptool
 
 Experimental UART receiver application rebuilt with self-test-gated OTA confirmation was installed at App1 offset 0x150000. esptool reported 217856 bytes written, hash verified, and staying in bootloader. Original App0 and boot selector were not targeted. Independent readback and first boot validation remain pending.
+
+
+### Second App1 activation staged and verified
+
+User successfully reactivated the receiver's OTA App1 slot by writing the prepared sequence 2 NEW activation sector. Post-write readback of the 8KB OTA metadata partition confirmed original App0 selection unchanged and the App1 sector exactly matched the prepared image. Reported checks: `ORIGINAL APP0 OTA SECTOR PRESERVED: PASS`, `NEW APP1 OTA SECTOR BYTE MATCH: PASS`, `FULL OTA READBACK VERIFIED: PASS`. The receiver has not yet restarted; its confirmed running state is still pending. Next: open no-reset serial monitor on COM7 and press EN once (without BOOT), capture CRC5 self-test plus `QHAP OTA APP1 CONFIRMED VALID`, then independently check OTA metadata state VALID.
