@@ -1639,3 +1639,10 @@ Remaining prewrite gate: separately assess app1-only image write, secure existin
 ## 59. Live App1 first 64 KiB erased
 
 On 2026-10-25, the separate experimental ESP32-S3 (COM7, rev v0.2) was read using esptool v5.4.0 in ROM no-stub mode: address 0x150000, length 0x10000 (65,536 bytes). The saved readback was checked by Python for exact length and every byte equal to 0xFF. Output: `QHAP LIVE APP1 FIRST 64KB ERASED PASS`. Previous read-only live OTA sector comparison also matched the historical 8 KiB image; boot selection remains App0. This is a read-only milestone: it proves only App1's first 64 KiB is blank. The rest of the 1280 KiB App1 partition still needs live verification. No flashing, OTA changes, or changes to the independent Bitaxe were performed.
+
+
+---
+
+## 60. Live App1 next 256 KiB verified erased
+
+**2026-10-25:** User completed a read-only live flash read of the second App1 region on the experimental ESP32-S3, COM7, address `0x160000`, length `0x40000` (256 KiB). Python checked exact 262,144 bytes and that every byte was `0xFF`; output: `QHAP LIVE APP1 NEXT 256KB ERASED PASS`, with no exception from follow-on PowerShell exit-code check. Together with the earlier 64KiB at `0x150000–0x15FFFF`, **320 KiB of the 1,280 KiB App1 slot** is confirmed erased in separate live reads. **960 KiB remains** to check live: `0x1A0000–0x28FFFF`. The historical offline reconstructed backup already showed all App1 erased, but the live scan has not yet been completed. No flash write, OTA switch, or Bitaxe change.
