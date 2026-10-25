@@ -1625,3 +1625,10 @@ Official Espressif ESP32-S3-DevKitC-1 v1.0/v1.1 board manuals agree **GPIO17 = h
 Official source: https://docs.espressif.com/projects/esp-dev-kits/en/latest/esp32s3/esp32-s3-devkitc-1/user_guide_v1.1.html ; Espressif v1.0 guide is linked from it; Raspberry Pi official Pico pinout documentation https://datasheets.raspberrypi.com/pico/Pico-2-Pinout.pdf ; ESP-IDF UART GPIO remap https://docs.espressif.com/projects/esp-idf/en/latest/esp32s3/api-reference/peripherals/uart.html .
 
 Remaining prewrite gate: separately assess app1-only image write, secure existing app0 and OTA recovery, protected backups (C and D same physical disk risk accepted by user), verify flash addresses and the live board identity and OTA state. No firmware flash has yet occurred.
+
+
+---
+
+## 58. Live COM7 OTA metadata matches saved App0 selection
+
+**2026-10-25:** The user performed an 8,192-byte read-only flash dump from experimental ESP32-S3 COM7 at address 0xE000 using esptool v5.4.0, --no-stub and 115200 baud. The ROM identified ESP32-S3 revision v0.2, MAC suffix 0a:58. Live OTA entry at **0xE000** has sequence **1**, state **0xffffffff**, and CRC **0x4743989a**; second at **0xF000** has sequence **0**, state **0xffffffff**, CRC **0xffffffff**. These fields match the previously validated private reconstructed backup and indicate App0 remains selected by normal two-slot ESP-IDF sequence mapping. Full live OTA file is stored locally in the private QHAP backup directory. No flash changes made. Next: verify the CRC using a script and compare all 8192 live OTA bytes to the reference image; then check candidate App1 state live as needed before considering application-only programming. User chose to keep recovery images private on laptop C and D volumes (same physical NVMe; correlated-loss risk explicitly noted).
