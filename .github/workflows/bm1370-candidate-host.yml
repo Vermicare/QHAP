@@ -1,0 +1,32 @@
+name: BM1370 candidate gate host tests
+
+on:
+  pull_request:
+    branches:
+      - feature/bm1370-integration
+    paths:
+      - 'main/qhap_bm1370_candidate.*'
+      - 'main/qhap_bm1370_protocol.*'
+      - 'main/qhap_bm1370_mock.*'
+      - 'tests/test_bm1370_candidate.c'
+      - '.github/workflows/bm1370-candidate-host.yml'
+  push:
+    branches:
+      - feature/bm1370-candidate-gate
+
+permissions:
+  contents: read
+
+jobs:
+  candidate-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile isolated candidate gate with repository decoder
+        run: |
+          gcc -std=c11 -O1 -g -Wall -Wextra -Werror -I main \
+            main/qhap_bm1370_protocol.c main/qhap_bm1370_mock.c \
+            main/qhap_bm1370_candidate.c tests/test_bm1370_candidate.c \
+            -lcrypto -o test_bm1370_candidate
+      - name: Exercise genesis and negative-case vectors
+        run: ./test_bm1370_candidate
