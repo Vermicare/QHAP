@@ -39,3 +39,12 @@ Improving physically realized valid hash work can improve odds proportionally: C
 - Receiver resumable checkpoint: [BM1370 Receiver Session Checkpoint](BM1370_RECEIVER_SESSION_CHECKPOINT_2026-10-25.md)
 
 **Evidence level:** numerical simulation (actual scaled SHA256d + stochastic waiting-time model), not a real miner hardware run or breakthrough.
+
+
+## Follow-up: 1 BTC per day (27 October 2026)
+
+Unlike sustaining 1 new BTC per second, achieving a long-run average of 1 BTC/day is within Bitcoin's aggregate issuance (approximately 450 newly issued BTC/day at its ten-minute target and 3.125 BTC/block subsidy), although entirely infeasible with the existing personal lab hardware.
+
+At difficulty **140,577,680,051,919.59**, current historical Gamma 601 speed **1.337 TH/s**, subsidy **3.125 BTC**, and 2% Solo CKPool fee (**3.0625 BTC per winning block**, excluding transaction fees), statistical expectation is **0.000000585929 BTC/day** or **58.59 satoshis/day**; this is *not* an actual daily solo payout. Approximate daily chance of finding a block is **1 in 5,226,743**. Fixed-difficulty calculation for 1 BTC/day of expected value: **2.28185 EH/s**, roughly **1,706,692** identical Gamma 601 miners or **41.814 MW** using the measured historical 24.5 W/unit (cooling and infrastructure excluded). That is around **0.21% of a reported 1,084 EH/s Bitcoin network hashrate**. Difficulty will retarget; network and hardware metrics change.
+
+Solo reward distributions are bursty: at a mean of 1 BTC/day, expected network-valid blocks/day = 1/3.0625 ≈ **0.32653**. The probability of *at least one* block in a day is only **27.86%**, while **72.14%** of days pay zero. A reproducible Poisson Monte Carlo with seed 20261027 over 200,000 modeled days produced mean 1.00135 BTC/day and **72.1515% zero-payout days**, illustrating why an average is not a guaranteed daily reward. This is a probabilistic model, not live hardware mining or a special SHA256 shortcut.
