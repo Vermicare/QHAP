@@ -1768,3 +1768,8 @@ User explicitly confirmed both POWERON restarts seen after the receiver OTA vali
 ### Checkpoint 2026-10-25: safe shutdown and next Pico UART session
 
 **Current authoritative end-of-session checkpoint:** [BM1370 receiver session checkpoint](docs/BM1370_RECEIVER_SESSION_CHECKPOINT_2026-10-25.md). Records the validated App1 OTA state, first rollback and fix, flash and recovery evidence, firmware hashes, private local backup paths, manual-RESET clarification, Raspberry Pi/Pico/ESP32 physical separation, safe power-down instructions, outstanding flash-size warning, and the exact next Pico H TX-to-ESP32 RX simulation steps. **No UART wire or Pico frame testing is complete. No OTA/flash changes are needed tomorrow.**
+
+
+### 2026-10-27 exact SHA256d reuse benchmark
+
+Executed exact SHA256d compression work experiments on a host CPU, with 2,060 nonce cases and changed-prefix checks all agreeing with a trusted Bitcoin genesis-vector reference. Conventional midstate reuse proved useful for a naive software baseline, but an experimental cache of three additional rounds had noisy, unconvincing marginal performance and no effect on per-hash block probability. See [experiment report](docs/QHAP_EXACT_SHA256D_REUSE_2026-10-27.md) and [small reproducible script](research/exact_sha256d_midstate_smoke.py). No mining hardware was touched. The 1 BTC/day target is not achieved. Next: robust compiled/hardware-specific evaluation; keep real Bitaxe and experimental ESP32 separate.
