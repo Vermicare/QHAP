@@ -42,3 +42,16 @@ Next scientific lane: compiled C comparison, custom SHA datapath timing/energy m
 - Bitcoin 80-byte header and SHA256d structure: https://developer.bitcoin.org/reference/block_chain.html
 - Independent prior-art and honest GPU benchmark: https://github.com/sora5801/cuda-double-sha256-miner/blob/main/docs/04-midstate-optimization.md
 - Earlier unsuccessful [QHAP conditional entropy gate](QHAP_CONDITIONAL_ENTROPY_GATE_2026-10-27.md).
+
+
+## Compiled-C comparison (GCC and Clang)
+
+A further local C implementation of Bitcoin SHA256d compression, conventional cached midstate, and the experimental first-three-round prefix cache passed the published Bitcoin genesis hash vector, checked 1,200 nonces plus boundary values, and checked 11 changed-prefix work templates with 20 nonce values each. Nine benchmark rounds were run for each method with alternating method order and 70,000 nonces per timed trial. Code generated as session artifact `qhap_sha256d_compiled_benchmark.c`; it does not access any miner hardware, wallet, network or pool.
+
+| Compiler | Naive hashes/sec | Midstate hashes/sec | Prefix-cache hashes/sec |
+| --- | ---: | ---: | ---: |
+| GCC 14.2 -O3 -march=native | 1,326,997 | 1,952,882 | 1,951,150 |
+| GCC 14.2 -O2 | 1,293,334 | 1,773,549 | 1,903,767 |
+| Clang 17 -O3 | 1,187,484 | 1,815,289 | 1,873,429 |
+
+These rates are arithmetic means of per-trial rates; one GCC -O2 midstate trial was notably slow, so don't interpret its relatively high prefix-cache ratio as a proven speed gain. GCC -O3 found virtually no additional benefit from prefix-round caching versus ordinary midstate. Clang -O3 showed a small gain, within plausible compiler/run variation. **No reliable large improvement demonstrated.** The compiled source currently remains downloadable as a session artifact, not yet versioned in GitHub. ASIC-specific conclusions remain unknown.
