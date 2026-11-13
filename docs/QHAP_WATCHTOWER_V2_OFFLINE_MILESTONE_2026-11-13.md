@@ -69,3 +69,10 @@
 - **Dashboard HTTP rendering is not yet user-verified.** Next gate is opening the ESP32's local dashboard from the same LAN and confirming it cycles scenarios. This is **not** the Windows localhost Python preview.
 - The physical Bitaxe Gamma 601 power fault remains unresolved; do not enable LIVE_MODE or power-cycle the miner. No automatic restart or hardware control.
 - COM7/COM8 preserved; COM9 firmware read-back before flashing remains stored privately by user.
+
+## On-device HTTP dashboard confirmed (user screenshot 2026-11-14 IST)
+- User's browser reached **QHAP ESP32 Watchtower** served directly by separate ESP32-S3 at its private Wi-Fi address. This is different from the Windows `127.0.0.1` Python simulation.
+- Browser screenshot visibly showed `POWER_FAULT`, clear banner `SIMULATED DATA · NOT LIVE BITAXE`, and explicit line `Monitor only. No reset, restart, relay, or configuration controls exist.`
+- Page populated a representative simulated `Bitaxe API reachable: true`, `AxeOS power fault: true`, 5.469 V input, 21 mV core, zero hashrate, 27.75 C ASIC, 30 C regulator, and synthetic uptime. **These are SIMULATED, not actual current miner readings or verified electrical measurements.**
+- Runtime now **hardware-verified for COM9 firmware boot, Wi-Fi connection, and successful browser dashboard rendering**. No real Bitaxe network read, restart, or hardware modifications were performed.
+- Next safe move: independent USB power to new COM9 ESP32 (not the miner's 5 V DC barrel supply), verify Wi-Fi dashboard remains reachable, then optionally monitor local connection stability; miner remains off pending electrical diagnosis. If user intends future live read-only monitoring, re-assess power fault and do not enable until hardware safety concern is addressed.
