@@ -90,3 +90,12 @@
 - This does **not** imply any Bitaxe telemetry or automatic recovery: the Watchtower remains `SIMULATION ONLY` and no restart, power switching or modification is enabled.
 - The Bitaxe Gamma 601's recurring electrical power fault remains unresolved. Do not enable LIVE_MODE or remotely restart it before supply/regulator safety concerns are addressed.
 - Future work: enhance standalone Watchtower logging and read-only alerts in simulation mode, retaining the preserved full-flash backup and without altering COM7/COM8.
+
+## Live read-only transition request and restart safety gate (2026-11-14 IST)
+- User wants automatic software restarts when Bitaxe 601 reports power fault, suspecting PG mains fluctuations. Explain: adapter YU0506 label input 100–240V AC, output 5V/6A; an adapter should regulate mains variations within rated range. Previous AxeOS reading was 5469 mV input, 21 mV core versus 1050 mV requested, 0 hashrate and active power fault; root cause unknown.
+- **Decision:** Do NOT enable unattended `POST /api/system/restart` against active regulator faults. Potential power instability, latch/protection and unexpected repeated resets could conceal a dangerous root cause. Firmware v2.12.2's generic fault does not distinguish regulator fault bits through its API.
+- Approved *software-only*, user-directed next step: transition the verified COM9 Watchtower from simulation to read-only monitoring by editing `constexpr bool LIVE_MODE = true;` in `QHAP_Watchtower.ino`, with Bitaxe host `192.168.1.18` stored only in local private `secrets.h`. Recompile and upload to the identified Watchtower board after checking correct COM port and 8 MB settings; no other board may be flashed. The program then sends only `GET /api/system/info` every 60s.
+- If the Bitaxe is powered off, its API will be unreachable; that is expected and not a regulator fault reading. Do not power on miner merely for monitoring test.
+- User has not yet reported completing this firmware change and upload; **do not claim live-mode deployment**.
+- Before a future restart feature, independently establish stable electrical supply and actual root cause, prevent repeated automated resets, and provide a manual stop latch. User declined live multimeter probing; respect this and prefer external supply swap/professional check.
+- Ref: https://bitaxe.de/en/bitaxe-hardware-fault-diagnosis (notes TPS regulator fault possibilities and latched behavior).
