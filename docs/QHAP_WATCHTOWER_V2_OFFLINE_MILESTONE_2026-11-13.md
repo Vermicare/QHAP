@@ -32,3 +32,10 @@
 - `docs/QHAP_STRATEGIC_PLAYBOOK.md`
 
 **No physical operations, live measurements, firmware updates, Bitaxe settings changes, ESP32 flashes, or new hashing performance were performed.**
+
+## COM9 backup checkpoint (user observed, 2026-11-14 IST)
+- A physically new ESP32-S3 QFN56 revision 0.2 appeared on COM9, with 8 MB flash and 8 MB embedded PSRAM. Preserve COM7 and COM8.
+- User ran `esptool v5.4.0 read-flash 0x0 0x800000` on COM9; read completed successfully in 66.6 seconds, reporting exactly **8,388,608 bytes**. `Get-Item` confirmed the output file size as **8,388,608 bytes**.
+- Windows `Get-FileHash` SHA-256 was **FF59F30CF44FCFF26732266A0A4BC025A866BC37324F008939E26B463AEE531B**. This verifies a local file was saved with the stated digest; an independent second hardware read-and-compare was *not* performed.
+- Backup is retained locally by user. **Never upload its raw flash contents** to the public repository: saved device configuration may contain secrets.
+- No erase/write/flash operations occurred. **Next gate:** Verify the Arduino toolchain and compile the simulation-only Watchtower sketch; no board upload until compilation is clean and user opts to proceed. Use generic `ESP32S3 Dev Module` with 8 MB flash only after confirming toolchain and suitability.
