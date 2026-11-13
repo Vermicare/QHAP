@@ -54,3 +54,10 @@
 - This confirms a flash write and readback verification, **not yet successful runtime operation**. Next validation: Arduino Serial Monitor at 115200, look for `QHAP Watchtower v2.0 - dedicated spare ESP32-S3 only`, `[QHAP] SIMULATION`, `MODE: SIMULATION ONLY`, and `NO POWER OR RESTART CONTROLS PRESENT`. Sketch outputs a simulated state about every 5 seconds. It is acceptable if Wi-Fi is disconnected because the user's secrets.h contains placeholders.
 - `LIVE_MODE = false` in code as distributed. No evidence that user's physical sketch was modified prior to upload; verify its serial output before reporting simulation as running.
 - User has not reported any real Bitaxe connection or repaired power supply; **do not enable live monitoring or reboot**. Existing QHAP COM7 and COM8 hardware have not been targeted by this upload.
+
+## COM9 runtime serial validation checkpoint (user observed 2026-11-14 IST)
+- Arduino Serial Monitor after first firmware flash printed `QHAP Watchtower v2.0 - dedicated spare ESP32-S3 only`, `=== QHAP WATCHTOWER ===`, and `MODE: SIMULATION ONLY`.
+- Reported synthetic transitions include `HASHING`, `POWER_FAULT` with historical example VIN 5469 mV, VCORE 21 mV, hashrate 0, `API_UNREACHABLE`, `WIFI_OFFLINE`, and `NO_HASHRATE`. Actual *physical ESP32 firmware runtime* on COM9 is now **user-confirmed**.
+- Serial shows `Wi-Fi status: DISCONNECTED`, `ESP32 dashboard IP: 0.0.0.0`, and `wifi:sta is connecting, return error`. Credentials in local `secrets.h` remain placeholder unless user configures them; **this does not indicate a defect in the state assessment logic**.
+- **No real Bitaxe telemetry has been read** and the Bitaxe electrical fault remains unresolved. Keep `LIVE_MODE=false`; next stage is privately configure 2.4 GHz SSID/password in local `secrets.h`, recompile and upload only to confirmed COM9, then confirm the separate ESP32's trusted-LAN dashboard IP. Do not commit `secrets.h` or share Wi-Fi credentials.
+- No automatic restart or power-control functionality exists; no miner/pool work or extra hashing capacity was demonstrated.
