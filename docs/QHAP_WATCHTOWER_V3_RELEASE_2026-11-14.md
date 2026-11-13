@@ -24,8 +24,11 @@
 - Python **6 structural/safety tests PASS**.
 - Total **42 checks PASS**, plus ZIP integrity test.
 - Full Arduino ESP32 sketch compile and ESP32 runtime **not executed yet**; Telegram end-to-end TLS/bot notification delivery untested.
-- Generated ZIP file (in conversation artifacts): `QHAP_Watchtower_V3.zip`; SHA256 `108fbd8a8d1041e090215a5c296a95161a66c787ffbaec011718f76be81ec6ee`.
+- Generated ZIP file (in conversation artifacts): `QHAP_Watchtower_V3.zip`; SHA256 `0fd7a8ba3a67447d5fa6b85f077415c3c59314b0ab4c4ebb39d2ab69628b0724`.
 - ZIP includes source, local credentials template, tests and thorough README. The source files are in the ZIP; they have **not yet been separately committed into this GitHub repository**.
+
+## Final optional notification self-test
+- A local Serial Monitor command `TEST_ALERT` sends a **benign Telegram test message** if configured, at most once every 30 minutes. It does not touch the Bitaxe, change the saved alert state, or induce faults; reports a failure if Telegram TLS/credentials/time are unavailable.
 
 ## Next acceptance gates
 1. User extracts v3 ZIP, creates new `secrets.h` from `secrets_example.h`, privately migrates Wi-Fi settings and sets a unique dashboard password. A v2 `secrets.h` cannot be copied wholesale because v3 adds fields.
