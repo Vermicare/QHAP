@@ -76,3 +76,10 @@
 - Page populated a representative simulated `Bitaxe API reachable: true`, `AxeOS power fault: true`, 5.469 V input, 21 mV core, zero hashrate, 27.75 C ASIC, 30 C regulator, and synthetic uptime. **These are SIMULATED, not actual current miner readings or verified electrical measurements.**
 - Runtime now **hardware-verified for COM9 firmware boot, Wi-Fi connection, and successful browser dashboard rendering**. No real Bitaxe network read, restart, or hardware modifications were performed.
 - Next safe move: independent USB power to new COM9 ESP32 (not the miner's 5 V DC barrel supply), verify Wi-Fi dashboard remains reachable, then optionally monitor local connection stability; miner remains off pending electrical diagnosis. If user intends future live read-only monitoring, re-assess power fault and do not enable until hardware safety concern is addressed.
+
+## Repeated on-device dashboard screenshots (2026-11-14 IST)
+- User supplied two additional browser screenshots of the QHAP Watchtower UI at local ESP32 Wi-Fi address `192.168.1.29` after discussing USB power independence.
+- First screenshot shows `NO_HASHRATE`, clear `SIMULATED DATA · NOT LIVE BITAXE`, and synthetic hashrate 0, VIN 5.06V, core 1040mV, temperatures 68.9/79C.
+- Second screenshot shows an AxeOS power fault in the **synthetic** data, 5.469V input, 21mV core, 0 hashrate, and a `Polls taken: 33` field. These are simulation examples, not fresh Bitaxe measurements.
+- Two readable UI states demonstrate dashboard availability and fault-scenario presentation on ESP32-served Wi-Fi. The screenshots alone do **not** independently prove whether the ESP32 was powered by laptop USB or standalone USB adapter; record independent-power test as user-conditional, not definitively proven.
+- Physical Bitaxe Gamma 601 electrical fault not repaired. Keep the miner off; `LIVE_MODE=false`; no restarts or connection attempts to the Bitaxe during this checkpoint.
