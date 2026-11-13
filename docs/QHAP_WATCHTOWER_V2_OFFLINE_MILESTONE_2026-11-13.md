@@ -46,3 +46,11 @@
 - Final IDE **Verify PASSED**: sketch program **918,243 bytes (27% of 3,342,336 byte app partition)**; global memory **46,732 bytes (14% of 327,680 bytes)**.
 - The ZIP sketch has `constexpr bool LIVE_MODE = false;`; it still calls `WiFi.begin()` with placeholders in `secrets.h`, so with no user-entered local Wi-Fi credentials the USB serial simulation runs but ESP32 browser dashboard is not accessible over WLAN. Do not collect passwords in chat.
 - Before upload: ensure COM9 selected, Erase All Flash disabled, LIVE_MODE false; upload would replace COM9 application firmware only. Original full-flash readback exists locally; first live hardware test is **not yet demonstrated**.
+
+## COM9 physical firmware upload checkpoint (2026-11-14 IST)
+- User supplied Arduino IDE upload log showing ESP32-S3 COM9 successful connection with expected QFN56 revision 0.2 and 8 MB flash.
+- esptool v5.3.1 uploaded bootloader at 0x00000000, partition table at 0x00008000, boot_app0 at 0x0000E000, and QHAP Watchtower simulation firmware at 0x00010000.
+- User's log reports firmware size 918,384 bytes written (compressed 605,809 bytes), followed by **Hash of data verified** and **Hard resetting via RTS pin**. Bootloader and partition images verified as well.
+- This confirms a flash write and readback verification, **not yet successful runtime operation**. Next validation: Arduino Serial Monitor at 115200, look for `QHAP Watchtower v2.0 - dedicated spare ESP32-S3 only`, `[QHAP] SIMULATION`, `MODE: SIMULATION ONLY`, and `NO POWER OR RESTART CONTROLS PRESENT`. Sketch outputs a simulated state about every 5 seconds. It is acceptable if Wi-Fi is disconnected because the user's secrets.h contains placeholders.
+- `LIVE_MODE = false` in code as distributed. No evidence that user's physical sketch was modified prior to upload; verify its serial output before reporting simulation as running.
+- User has not reported any real Bitaxe connection or repaired power supply; **do not enable live monitoring or reboot**. Existing QHAP COM7 and COM8 hardware have not been targeted by this upload.
