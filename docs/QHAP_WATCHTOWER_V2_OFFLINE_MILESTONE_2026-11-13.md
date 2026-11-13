@@ -39,3 +39,10 @@
 - Windows `Get-FileHash` SHA-256 was **FF59F30CF44FCFF26732266A0A4BC025A866BC37324F008939E26B463AEE531B**. This verifies a local file was saved with the stated digest; an independent second hardware read-and-compare was *not* performed.
 - Backup is retained locally by user. **Never upload its raw flash contents** to the public repository: saved device configuration may contain secrets.
 - No erase/write/flash operations occurred. **Next gate:** Verify the Arduino toolchain and compile the simulation-only Watchtower sketch; no board upload until compilation is clean and user opts to proceed. Use generic `ESP32S3 Dev Module` with 8 MB flash only after confirming toolchain and suitability.
+
+## Arduino IDE hardware-target compile checkpoint (user observed 2026-11-14 IST)
+- Arduino IDE 2.3.11, Espressif ESP32 platform 3.3.11, ArduinoJson 7.4.3.
+- Board ESP32S3 Dev Module; 8 MB flash; 8M with SPIFFS (3 MB APP / 1.5 MB SPIFFS); OPI PSRAM; USB CDC on boot enabled. COM9 confirmed via read-only esptool as separate physical board.
+- Final IDE **Verify PASSED**: sketch program **918,243 bytes (27% of 3,342,336 byte app partition)**; global memory **46,732 bytes (14% of 327,680 bytes)**.
+- The ZIP sketch has `constexpr bool LIVE_MODE = false;`; it still calls `WiFi.begin()` with placeholders in `secrets.h`, so with no user-entered local Wi-Fi credentials the USB serial simulation runs but ESP32 browser dashboard is not accessible over WLAN. Do not collect passwords in chat.
+- Before upload: ensure COM9 selected, Erase All Flash disabled, LIVE_MODE false; upload would replace COM9 application firmware only. Original full-flash readback exists locally; first live hardware test is **not yet demonstrated**.
