@@ -83,3 +83,10 @@
 - Second screenshot shows an AxeOS power fault in the **synthetic** data, 5.469V input, 21mV core, 0 hashrate, and a `Polls taken: 33` field. These are simulation examples, not fresh Bitaxe measurements.
 - Two readable UI states demonstrate dashboard availability and fault-scenario presentation on ESP32-served Wi-Fi. The screenshots alone do **not** independently prove whether the ESP32 was powered by laptop USB or standalone USB adapter; record independent-power test as user-conditional, not definitively proven.
 - Physical Bitaxe Gamma 601 electrical fault not repaired. Keep the miner off; `LIVE_MODE=false`; no restarts or connection attempts to the Bitaxe during this checkpoint.
+
+## Independent USB power confirmed by user (2026-11-14 IST)
+- Following successful Wi-Fi-dashboard screenshots at `192.168.1.29`, user explicitly confirmed the ESP32-S3 Watchtower was operating from a **separate USB power supply**, disconnected from the laptop.
+- This closes the **independent-power operation gate** for COM9: firmware boot, Wi-Fi station connectivity and ESP32-hosted browser dashboard were user-observed while powered separately.
+- This does **not** imply any Bitaxe telemetry or automatic recovery: the Watchtower remains `SIMULATION ONLY` and no restart, power switching or modification is enabled.
+- The Bitaxe Gamma 601's recurring electrical power fault remains unresolved. Do not enable LIVE_MODE or remotely restart it before supply/regulator safety concerns are addressed.
+- Future work: enhance standalone Watchtower logging and read-only alerts in simulation mode, retaining the preserved full-flash backup and without altering COM7/COM8.
