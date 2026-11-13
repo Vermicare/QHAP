@@ -99,3 +99,11 @@
 - User has not yet reported completing this firmware change and upload; **do not claim live-mode deployment**.
 - Before a future restart feature, independently establish stable electrical supply and actual root cause, prevent repeated automated resets, and provide a manual stop latch. User declined live multimeter probing; respect this and prefer external supply swap/professional check.
 - Ref: https://bitaxe.de/en/bitaxe-hardware-fault-diagnosis (notes TPS regulator fault possibilities and latched behavior).
+
+## COM9 live Bitaxe read-only monitoring verified (user-provided snapshot, 2026-11-14 IST)
+- User supplied the independent ESP32 Watchtower's **LIVE READ-ONLY STATUS** dashboard report, establishing that the new COM9 controller queried real Bitaxe Gamma 601 AxeOS telemetry through local Wi-Fi. This is separate from simulation-mode success.
+- Values in that user snapshot: API reachable `true`; `power_fault: true`; `hardware_fault: false`; reported input 5.46875 V; core actual 21 mV; hashrate 0; ASIC temp 26.125 C; regulator temp 28 C; miner uptime 2,049 s; `voltage_advisory: true`; `core output missing: true`; three polls.
+- **Interpretation:** Confirmed current remote power-fault state and zero hashing; neither the nominal adapter label nor the AxeOS input reading independently diagnoses the cause. Previously observed adapter label YU0506 nominal 5V/6A. Historical fault recurred, even after the user previously observed temporary restart recovery.
+- **Safety decision:** advise shutting off the miner's AC adapter at the wall (without electrical probing), leaving it off until a verified correct manufacturer-compatible 5V/6A center-positive barrel supply is substituted safely, or competent inspection identifies cause. Do not restart or cycle power automatically in the face of active TPS546 regulator protection. User has previously declined probe testing and that choice is respected.
+- **Software milestone:** COM9 read-only Bitaxe monitoring is operational. `NO POWER OR RESTART CONTROLS PRESENT` remains the intended model. Keep independent ESP32 power, and consider offline/history/notification improvements while miner is off.
+- Status source is user's pasted Watchtower dashboard, not independent assistant LAN access. Real-time readings must not be presented as continuously accessible to ChatGPT.
