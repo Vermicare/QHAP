@@ -61,3 +61,11 @@
 - Serial shows `Wi-Fi status: DISCONNECTED`, `ESP32 dashboard IP: 0.0.0.0`, and `wifi:sta is connecting, return error`. Credentials in local `secrets.h` remain placeholder unless user configures them; **this does not indicate a defect in the state assessment logic**.
 - **No real Bitaxe telemetry has been read** and the Bitaxe electrical fault remains unresolved. Keep `LIVE_MODE=false`; next stage is privately configure 2.4 GHz SSID/password in local `secrets.h`, recompile and upload only to confirmed COM9, then confirm the separate ESP32's trusted-LAN dashboard IP. Do not commit `secrets.h` or share Wi-Fi credentials.
 - No automatic restart or power-control functionality exists; no miner/pool work or extra hashing capacity was demonstrated.
+
+## COM9 local Wi-Fi dashboard connectivity checkpoint (user-observed 2026-11-14 IST)
+- The user's **actual COM9 ESP32-S3 firmware** continued to cycle through simulated `HASHING`, `POWER_FAULT`, `API_UNREACHABLE`, `WIFI_OFFLINE`, and `NO_HASHRATE` states.
+- A later `STATUS` output confirmed `MODE: SIMULATION ONLY`, `Wi-Fi status: CONNECTED`, `ESP32 dashboard IP: 192.168.1.29`, `Poll count: 47`, `NO POWER OR RESTART CONTROLS PRESENT`.
+- `State: WIFI_OFFLINE` in that status output is the **synthetic scenario state**, not a real network-disconnect diagnostic; Wi-Fi interface reported **CONNECTED** independently.
+- **Dashboard HTTP rendering is not yet user-verified.** Next gate is opening the ESP32's local dashboard from the same LAN and confirming it cycles scenarios. This is **not** the Windows localhost Python preview.
+- The physical Bitaxe Gamma 601 power fault remains unresolved; do not enable LIVE_MODE or power-cycle the miner. No automatic restart or hardware control.
+- COM7/COM8 preserved; COM9 firmware read-back before flashing remains stored privately by user.
